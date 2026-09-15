@@ -1,0 +1,4 @@
+# Pin torch to the pytorch/pytorch:2.2.2-cuda11.8 base (Pascal-friendly).
+torch==2.2.2
+torchaudio==2.2.2
+torchvision==0.17.2

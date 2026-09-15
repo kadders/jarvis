@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-asr-config
+  labels:
+    app.kubernetes.io/name: jarvis-asr
+data:
+  ASR_API_HOST: "0.0.0.0"
+  ASR_API_PORT: "8001"
+  ASR_MODEL_NAME: "facebook/wav2vec2-base-960h"
+  MONITOR_AUDIO_DIR: "true"
+  FORWARD_TO_LLM: "true"
+  LLM_API_URL: "http://llm-api:8000/api/v1/events"
+  JARVIS_CONFIG_DIR: "/etc/jarvis/config"
+  JARVIS_CONFIG_RELOAD_INTERVAL_S: "30"

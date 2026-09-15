@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wand
+  labels:
+    app.kubernetes.io/name: jarvis-wand
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jarvis-wand
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-wand
+    spec:
+      containers:
+        - name: wand
+          image: jarvis_wand_service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8002
+              name: http
+          envFrom:
+            - configMapRef:
+                name: jarvis-wand-config
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: "250m"
+          volumeMounts:
+            - name: wand-config-volume
+              mountPath: /etc/jarvis/config
+              readOnly: true
+            - name: wand-models
+              mountPath: /app/models/wand_gesture
+              readOnly: true
+      volumes:
+        - name: wand-config-volume
+          configMap:
+            name: jarvis-wand-config
+        - name: wand-models
+          emptyDir: {}

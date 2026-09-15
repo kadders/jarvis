@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tts
+  labels:
+    app.kubernetes.io/name: jarvis-tts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jarvis-tts
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-tts
+    spec:
+      containers:
+        - name: tts
+          image: jarvis_tts:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8002
+              name: http
+          envFrom:
+            - configMapRef:
+                name: jarvis-tts-config
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: "100m"
+          volumeMounts:
+            - name: tts-config-volume
+              mountPath: /etc/jarvis/config
+              readOnly: true
+      volumes:
+        - name: tts-config-volume
+          configMap:
+            name: jarvis-tts-config

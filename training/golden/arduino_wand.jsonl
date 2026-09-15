@@ -1,0 +1,20 @@
+{"prompt": "ESP32 loop: poll Wand API without blocking delay(500) every iteration.", "expect_contains": ["millis"]}
+{"prompt": "WiFi reconnect in loop: use backoff, not while-delay spin.", "expect_contains": ["reconnect"]}
+{"prompt": "ArduinoJson: size JsonDocument and check deserializeJson error.", "expect_contains": ["JsonDocument"]}
+{"prompt": "HTTPClient: call http.end() after GET.", "expect_contains": ["http.end"]}
+{"prompt": "PlatformIO Wand edge: use framework arduino.", "expect_contains": ["arduino"]}
+{"prompt": "Wand effects API URL path for last cast.", "expect_contains": ["/api/v1/effects/last"]}
+{"prompt": "Build flags: allow WAND_API_HOST override via #ifndef.", "expect_contains": ["#ifndef"]}
+{"prompt": "Avoid String concatenation for URL in hot loop; use snprintf.", "expect_contains": ["snprintf"]}
+{"prompt": "FastLED show after fill_solid in flashSpell.", "expect_contains": ["FastLED.show"]}
+{"prompt": "XIAO ESP32-S3 Wand edge polls which port by default?", "expect_contains": ["8002"]}
+{"prompt": "Non-blocking loop should still call updateLeds or equivalent.", "expect_contains": ["update"]}
+{"prompt": "StaticJsonDocument<64> is too small for spell_id JSON — prefer JsonDocument with capacity.", "expect_contains": ["JsonDocument"]}
+{"prompt": "WiFi.mode should be WIFI_STA for station client.", "expect_contains": ["WIFI_STA"]}
+{"prompt": "Deserialize JSON body from HTTP 200 only.", "expect_contains": ["200"]}
+{"prompt": "tiny-ocr firmware: WiFi setup belongs in dedicated module.", "expect_contains": ["wifi"]}
+{"prompt": "ESP32 edge: spell_id field name from Wand API JSON.", "expect_contains": ["spell_id"]}
+{"prompt": "Do not block in loop waiting for WiFi forever.", "expect_contains": ["millis"]}
+{"prompt": "HTTP poll interval for Wand effects should be hundreds of ms, not seconds of delay.", "expect_contains": ["500"]}
+{"prompt": "Arduino metadata.domain for MCP feedback on firmware fixes.", "expect_contains": ["arduino_wand"]}
+{"prompt": "PlatformIO env build_flags can inject WAND_WIFI_SSID.", "expect_contains": ["WAND_WIFI"]}

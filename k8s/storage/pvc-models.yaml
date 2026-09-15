@@ -1,0 +1,45 @@
+# Optional dynamic PVCs for model weights (adjust storageClassName for your cluster).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jarvis-llm-models
+  labels:
+    app.kubernetes.io/name: jarvis-storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  # storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jarvis-asr-models
+  labels:
+    app.kubernetes.io/name: jarvis-storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # storageClassName: standard
+# ---
+# NFS example — uncomment and set server/path for shared RWX volumes.
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: jarvis-shared-nfs
+# spec:
+#   capacity:
+#     storage: 100Gi
+#   accessModes:
+#     - ReadWriteMany
+#   nfs:
+#     server: 10.0.0.5
+#     path: /export/jarvis
+#   mountOptions:
+#     - hard
+#     - nfsvers=4.1

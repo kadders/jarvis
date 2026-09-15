@@ -1,0 +1,2 @@
+{"prompt": "Say the word paris only.", "expect_contains": ["paris"]}
+{"prompt": "Reply with exactly: ok", "expect_equals": "ok"}

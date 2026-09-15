@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asr
+  labels:
+    app.kubernetes.io/name: jarvis-asr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jarvis-asr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-asr
+    spec:
+      containers:
+        - name: asr
+          image: jarvis_asr_service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8001
+              name: http
+          env:
+            - name: ASR_MODEL_PATH
+              value: /app/models/asr_model
+            - name: AUDIO_INPUT_DIR
+              value: /shared/audio_input
+            - name: AUDIO_OUTPUT_DIR
+              value: /shared/audio_output
+            - name: TRANSCRIPTIONS_DIR
+              value: /shared/transcriptions
+          envFrom:
+            - configMapRef:
+                name: jarvis-asr-config
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: "500m"
+          volumeMounts:
+            - name: asr-config-volume
+              mountPath: /etc/jarvis/config
+              readOnly: true
+      volumes:
+        - name: asr-config-volume
+          configMap:
+            name: jarvis-asr-config

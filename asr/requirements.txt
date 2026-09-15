@@ -1,0 +1,38 @@
+# Updated requirements
+# Generated on Wed May 14 02:57:08 PM PDT 2025
+# Updated requirements
+# Generated on Wed May 14 07:48:26 AM PDT 2025
+# Updated requirements
+# Generated on Wed May 14 07:16:45 AM PDT 2025
+# Core API dependencies
+fastapi==0.115.12
+uvicorn==0.34.2
+pydantic==2.11.4
+httpx==0.28.1
+python-dotenv==1.1.0
+
+# ML dependencies
+numpy==2.2.5
+torch==2.7.0
+transformers==4.51.3
+torchaudio==2.7.0
+librosa==0.11.0
+
+# Speech recognition
+SpeechRecognition==3.14.3
+pydub==0.25.1
+
+# API utilities
+python-multipart==0.0.20
+watchdog==6.0.0
+websockets==15.0.1
+loguru==0.7.3
+
+# Testing
+pytest==8.3.5
+
+# Speech synthesis
+gTTS==2.5.4
+
+# Audio capture
+

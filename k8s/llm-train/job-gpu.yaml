@@ -1,0 +1,61 @@
+# Second-stage Job: QLoRA/DPO on 1 GPU after preferences.jsonl exists.
+# Requires CUDA training image: training/Dockerfile.cuda → jarvis_llm_train_cuda:latest
+# Operator: scale down ollama-fast replicas or free a 1070 before applying.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jarvis-llm-dpo-gpu
+  labels:
+    app.kubernetes.io/name: jarvis-llm-train
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-llm-train
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: train
+          image: 192.168.86.120:32000/jarvis_llm_train_cuda:latest
+          imagePullPolicy: Always
+          env:
+            - name: HF_HOME
+              value: /data/adapters/hf
+            - name: TRANSFORMERS_CACHE
+              value: /data/adapters/hf
+          command: ["python", "-m", "training.train_dpo"]
+          args:
+            - --preferences
+            - /data/adapters/preferences.jsonl
+            - --out-dir
+            - /data/adapters/run_jarvis_v3
+            - --base-model
+            # Ungated Llama 3.2 Instruct mirror (meta-llama/* requires HF access + token)
+            - unsloth/Llama-3.2-3B-Instruct
+            - --ollama-base-tag
+            - llama3.2:3b
+            - --ollama-tag
+            - jarvis-tuned:latest
+            - --min-pairs
+            - "8"
+            - --max-steps
+            - "220"
+            - --batch-size
+            - "1"
+          volumeMounts:
+            - name: adapters
+              mountPath: /data/adapters
+          resources:
+            requests:
+              memory: 8Gi
+              cpu: "1"
+              nvidia.com/gpu: "1"
+            limits:
+              memory: 12Gi
+              nvidia.com/gpu: "1"
+      volumes:
+        - name: adapters
+          persistentVolumeClaim:
+            claimName: llm-adapters

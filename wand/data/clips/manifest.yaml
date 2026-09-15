@@ -1,0 +1,140 @@
+version: 1
+policy:
+  prefer_channels:
+  - WizardingWorld
+  - Harry Potter
+  max_duration_sec: 300
+  private_cache_only: true
+spells:
+- spell_id: expecto_patronum
+  incantations:
+  - expecto patronum
+  search_queries:
+  - Expecto Patronum WizardingWorld
+  - Patronus Prisoner of Azkaban official
+  clips:
+  - video_id: RezjC4jdbTU
+    url: https://www.youtube.com/watch?v=RezjC4jdbTU
+    status: accepted
+    scores:
+      trust: 2
+      duration: 2
+      audio: 2
+      motion: 2
+      focus: 2
+    notes: "Official PoA Patronus \u2014 validate first"
+    meta:
+      title: Patronus | Harry Potter and the Prisoner of Azkaban
+      channel: WizardingWorld
+      duration: 131
+      source: offline_fallback
+  - video_id: RCVdgFin8uQ
+    url: https://www.youtube.com/watch?v=RCVdgFin8uQ
+    status: accepted
+    scores:
+      trust: 2
+      duration: 2
+      audio: 2
+      motion: 2
+      focus: 2
+    notes: DA training Patronus
+    meta:
+      title: Dumbledore's Army | Harry Potter and the Order of the Phoenix
+      channel: WizardingWorld
+      duration: 66
+      source: offline_fallback
+- spell_id: wingardium_leviosa
+  incantations:
+  - wingardium leviosa
+  search_queries:
+  - Leviosa not Leviosaaa WizardingWorld
+  - Wingardium Leviosa Philosopher Stone official
+  clips:
+  - video_id: Qgr4dcsY-60
+    url: https://www.youtube.com/watch?v=Qgr4dcsY-60
+    status: accepted
+    scores:
+      trust: 2
+      duration: 2
+      audio: 2
+      motion: 2
+      focus: 2
+    meta:
+      title: It's Leviosa, Not Leviosaaa! | Harry Potter and the Philosopher's Stone
+      channel: WizardingWorld
+      duration: 90
+      source: offline_fallback
+- spell_id: expelliarmus
+  incantations:
+  - expelliarmus
+  search_queries:
+  - Expelliarmus Dumbledore's Army
+  - Expelliarmus Order of the Phoenix official
+  clips:
+  - video_id: fEOuMCd5e9I
+    url: https://www.youtube.com/watch?v=fEOuMCd5e9I
+    status: accepted
+    scores:
+      trust: 1
+      duration: 2
+      audio: 2
+      motion: 2
+      focus: 2
+    notes: Prefer official replacement if available
+    meta:
+      title: Dumbledore's Army - Expelliarmus training
+      channel: FanHD
+      duration: 120
+      source: offline_fallback
+- spell_id: lumos
+  incantations:
+  - lumos
+  - lumos maxima
+  search_queries:
+  - Lumos Harry Potter scene
+  - Lumos Maxima Goblet of Fire
+  clips:
+  - video_id: 5rrY7FnXFko
+    url: https://www.youtube.com/watch?v=5rrY7FnXFko
+    status: candidate
+    scores:
+      trust: null
+      duration: null
+      audio: null
+      motion: null
+      focus: null
+    notes: "Short Lumos Maxima mention \u2014 score motion carefully (may be commentary)"
+- spell_id: incendio
+  incantations:
+  - incendio
+  search_queries:
+  - Incendio Harry Potter
+  - Hermione Incendio scene
+  clips: []
+  notes: "sparse \u2014 ASR-only until a focused clip is curated"
+- spell_id: alohomora
+  incantations:
+  - alohomora
+  search_queries:
+  - Alohomora Harry Potter
+  - Alohomora door scene
+  clips: []
+  notes: "sparse \u2014 ASR-only until a focused clip is curated"
+- spell_id: revelio
+  incantations:
+  - revelio
+  - specialis revelio
+  search_queries:
+  - Specialis Revelio
+  - Revelio Harry Potter
+  clips: []
+- spell_id: stupefy
+  incantations:
+  - stupefy
+  search_queries:
+  - Stupefy Harry Potter duel
+  clips: []
+secondary_index:
+- video_id: zHPqO0UnaW8
+  url: https://www.youtube.com/watch?v=zHPqO0UnaW8
+  notes: "Just The Spells supercut \u2014 segment with t_start/t_end only after review"

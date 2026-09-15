@@ -1,0 +1,30 @@
+{"prompt": "What Python formatter should Jarvis code use?", "expect_contains": ["Black", "88"]}
+{"prompt": "Format a Python function with Black: use double quotes for strings.", "expect_contains": ["\""]}
+{"prompt": "What header must POST /api/v1/events honor for safe retries?", "expect_contains": ["Idempotency-Key"]}
+{"prompt": "Where should ASR logic live vs the LLM API in Jarvis?", "expect_contains": ["asr/"]}
+{"prompt": "How should tap-testing enable MQTT telemetry?", "expect_contains": ["TAP_MQTT_HOST"]}
+{"prompt": "Show env-driven config for JARVIS_FEEDBACK_DIR with a sensible default.", "expect_contains": ["os.environ", "cache"]}
+{"prompt": "Write a pytest that uses tmp_path instead of writing to cache/llm_feedback.", "expect_contains": ["tmp_path"]}
+{"prompt": "Catch ValueError when parsing integers, not bare except.", "expect_contains": ["ValueError"]}
+{"prompt": "Use from __future__ import annotations in new Jarvis Python modules.", "expect_contains": ["annotations"]}
+{"prompt": "How does jarvis_mcp connect to the LLM API?", "expect_contains": ["JARVIS_LLM_BASE_URL"]}
+{"prompt": "What is the default idempotency backend in tests?", "expect_contains": ["memory"]}
+{"prompt": "FastAPI feedback route: pass metadata.domain for python_jarvis corrections.", "expect_contains": ["domain"]}
+{"prompt": "Black line length for Jarvis Python?", "expect_contains": ["88"]}
+{"prompt": "Should Python use autopep8 at 79 columns for Jarvis?", "expect_contains": ["Black"]}
+{"prompt": "Export DPO preferences from feedback: chosen comes from correction when rating is -1.", "expect_contains": ["correction"]}
+{"prompt": "tap-testing MQTT publisher: disabled when TAP_MQTT_HOST unset.", "expect_contains": ["None"]}
+{"prompt": "tiny-ocr client should use httpx or urllib for REST, not blocking sync in async.", "expect_contains": ["httpx"]}
+{"prompt": "Jarvis LLM handler code_generation for python language preamble.", "expect_contains": ["Black"]}
+{"prompt": "Redis idempotency env var name in Jarvis.", "expect_contains": ["REDIS"]}
+{"prompt": "POST /api/v1/feedback stores records in which file?", "expect_contains": ["feedback.jsonl"]}
+{"prompt": "Learning UI domain filter values include python_jarvis.", "expect_contains": ["python_jarvis"]}
+{"prompt": "training.merge_preferences caps python_public when jarvis ratio too low.", "expect_contains": ["python"]}
+{"prompt": "DPO train entrypoint module path.", "expect_contains": ["train_dpo"]}
+{"prompt": "Default Ollama tuned tag after DPO export.", "expect_contains": ["jarvis-tuned"]}
+{"prompt": "MCP jarvis_log_outcome sets metadata.kind outcome.", "expect_contains": ["outcome"]}
+{"prompt": "Python type hint for optional MQTT config factory return.", "expect_contains": ["None"]}
+{"prompt": "Use pydantic-settings BaseSettings for Jarvis service config.", "expect_contains": ["BaseSettings"]}
+{"prompt": "Starlette version constraint for FastAPI compatibility with mcp package.", "expect_contains": ["0.47"]}
+{"prompt": "Golden eval schema uses expect_contains for partial match.", "expect_contains": ["expect"]}
+{"prompt": "Public Python HF dataset dir name in training/datasets.", "expect_contains": ["python_public"]}

@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "spells": [
+    {
+      "spell_id": "alohomora",
+      "incantations": ["alohomora", "alohamora"],
+      "park_relevant": true,
+      "description": "Unlocking charm"
+    },
+    {
+      "spell_id": "incendio",
+      "incantations": ["incendio", "incindio"],
+      "park_relevant": true,
+      "description": "Fire-making charm"
+    },
+    {
+      "spell_id": "lumos",
+      "incantations": ["lumos", "lumos maxima"],
+      "park_relevant": true,
+      "description": "Wand-lighting charm"
+    },
+    {
+      "spell_id": "revelio",
+      "incantations": ["revelio", "specialis revelio"],
+      "park_relevant": true,
+      "description": "Revealing charm"
+    },
+    {
+      "spell_id": "arresto_momentum",
+      "incantations": ["arresto momentum", "arresto momento"],
+      "park_relevant": true,
+      "description": "Slowing charm"
+    },
+    {
+      "spell_id": "locomotor",
+      "incantations": ["locomotor"],
+      "park_relevant": true,
+      "description": "Locomotion charm"
+    },
+    {
+      "spell_id": "wingardium_leviosa",
+      "incantations": ["wingardium leviosa", "leviosa"],
+      "park_relevant": true,
+      "description": "Levitation charm"
+    },
+    {
+      "spell_id": "expelliarmus",
+      "incantations": ["expelliarmus", "expeliamus"],
+      "park_relevant": true,
+      "description": "Disarming charm"
+    },
+    {
+      "spell_id": "expecto_patronum",
+      "incantations": ["expecto patronum", "patronum"],
+      "park_relevant": true,
+      "description": "Patronus charm"
+    },
+    {
+      "spell_id": "stupefy",
+      "incantations": ["stupefy"],
+      "park_relevant": false,
+      "description": "Stunning spell (film ASR lexicon)"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# Pi edge client deps (install on the Raspberry Pi)
+opencv-python-headless>=4.8
+numpy>=1.24
+# Optional hardware:
+# rpi-ws281x / adafruit-circuitpython-neopixel
+# RPi.GPIO

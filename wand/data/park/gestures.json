@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "source": "universal_interactive_wand_medallion_patterns",
+  "gestures": [
+    {
+      "spell_id": "incendio",
+      "shape": "triangle",
+      "notes": "Δ path — common park Incendio medallion"
+    },
+    {
+      "spell_id": "alohomora",
+      "shape": "phi",
+      "notes": "φ-like unlock path"
+    },
+    {
+      "spell_id": "lumos",
+      "shape": "vertical_line",
+      "notes": "Upward stroke"
+    },
+    {
+      "spell_id": "revelio",
+      "shape": "letter_r",
+      "notes": "R-shaped reveal"
+    },
+    {
+      "spell_id": "arresto_momentum",
+      "shape": "letter_m",
+      "notes": "M path"
+    },
+    {
+      "spell_id": "locomotor",
+      "shape": "digit_4",
+      "notes": "4-like path"
+    },
+    {
+      "spell_id": "wingardium_leviosa",
+      "shape": "swish_flick",
+      "notes": "Swish and flick"
+    },
+    {
+      "spell_id": "expelliarmus",
+      "shape": "slash",
+      "notes": "Forward slash / disarm"
+    },
+    {
+      "spell_id": "expecto_patronum",
+      "shape": "raise",
+      "notes": "Upward raise / back-and-forth for some park spots"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# syntax=docker/dockerfile:1
+FROM python:3.10-slim AS build
+WORKDIR /docs
+COPY requirements-docs.txt ./
+RUN pip install --no-cache-dir -r requirements-docs.txt
+COPY mkdocs.yml ./
+COPY docs ./docs
+RUN mkdocs build --strict
+
+FROM nginx:alpine
+COPY --from=build /docs/site /usr/share/nginx/html
+EXPOSE 80

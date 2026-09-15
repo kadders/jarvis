@@ -1,0 +1,7 @@
+# Cached YouTube downloads (private research only — do not redistribute)
+*.mp4
+*.webm
+*.mkv
+*.wav
+*.m4a
+raw/

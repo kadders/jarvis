@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wand
+  labels:
+    app.kubernetes.io/name: jarvis-wand
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: jarvis-wand
+  ports:
+    - name: http
+      port: 8002
+      targetPort: http

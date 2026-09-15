@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: asr
+  labels:
+    app.kubernetes.io/name: jarvis-asr
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: jarvis-asr
+  ports:
+    - name: http
+      port: 8001
+      targetPort: http

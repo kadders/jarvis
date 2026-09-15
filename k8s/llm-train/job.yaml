@@ -1,0 +1,51 @@
+# Manual Job: free a GPU (scale ollama-fast or reduce ollama GPUs), then:
+#   kubectl -n jarvis-llm apply -f k8s/llm-train/job.yaml
+# Prefers dry-run validation by default; set TRAIN_DRY_RUN=false and use a CUDA image for real DPO.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jarvis-llm-dpo
+  labels:
+    app.kubernetes.io/name: jarvis-llm-train
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-llm-train
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: train
+          image: 192.168.86.120:32000/jarvis_llm_train:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TRAIN_DRY_RUN
+              value: "true"
+          command: ["python", "-m", "training.export_preferences"]
+          args:
+            - --feedback
+            - /data/feedback/feedback.jsonl
+            - --out
+            - /data/adapters/preferences.jsonl
+            - --min-pairs
+            - "1"
+          volumeMounts:
+            - name: feedback
+              mountPath: /data/feedback
+            - name: adapters
+              mountPath: /data/adapters
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: "250m"
+            limits:
+              memory: 8Gi
+      volumes:
+        - name: feedback
+          persistentVolumeClaim:
+            claimName: llm-feedback
+        - name: adapters
+          persistentVolumeClaim:
+            claimName: llm-adapters

@@ -1,0 +1,61 @@
+# Merge LoRA adapter → HF → GGUF + Modelfile for ollama create.
+# Requires CUDA train image (peft/transformers) and free RAM/CPU; GPU optional
+# (merge runs on CPU). Prefer 1 free GPU node capacity so the Job can schedule
+# alongside big Ollama if you keep a GPU request for placement.
+#
+# After Job succeeds, publish on the big Ollama pod:
+#   kubectl -n jarvis-llm cp …/jarvis-tuned-q8_0.gguf deploy/ollama:/tmp/jarvis-tuned/
+#   kubectl -n jarvis-llm cp …/Modelfile deploy/ollama:/tmp/jarvis-tuned/
+#   kubectl -n jarvis-llm exec deploy/ollama -- \
+#     sh -c 'cd /tmp/jarvis-tuned && ollama create jarvis-tuned:latest -f Modelfile'
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jarvis-llm-export-ollama
+  labels:
+    app.kubernetes.io/name: jarvis-llm-train
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-llm-train
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: export
+          image: 192.168.86.120:32000/jarvis_llm_train_cuda:latest
+          imagePullPolicy: Always
+          env:
+            - name: HF_HOME
+              value: /data/adapters/hf
+            - name: TRANSFORMERS_CACHE
+              value: /data/adapters/hf
+            - name: HOME
+              value: /tmp
+          # Override image ENTRYPOINT (train_dpo) so we can run export.
+          command: ["python", "-m", "training.export_ollama_tuned"]
+          args:
+            - --run-dir
+            - /data/adapters/run_rrf_nxt_v2
+            - --base-model
+            - unsloth/Llama-3.2-3B-Instruct
+            - --outtype
+            - q8_0
+            - --tag
+            - jarvis-tuned:latest
+            # Add --skip-merge when reusing an existing merged/ tree.
+          volumeMounts:
+            - name: adapters
+              mountPath: /data/adapters
+          resources:
+            requests:
+              memory: 12Gi
+              cpu: "2"
+            limits:
+              memory: 16Gi
+      volumes:
+        - name: adapters
+          persistentVolumeClaim:
+            claimName: llm-adapters

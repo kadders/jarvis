@@ -1,0 +1,34 @@
+{"prompt": "Write an RRF meta G-code echo that prints the current position using a variable. Brace the expression correctly for nxt.", "expect_contains": ["echo {"]}
+{"prompt": "In nxt macros, what prefix must global variables use? Reply with the prefix word only.", "expect_contains": ["nxt"]}
+{"prompt": "What is the nxt CI maximum characters per non-comment .g line before 'GCode command too long' risk? Reply with the number.", "expect_contains": ["200"]}
+{"prompt": "List the required parameters for nxt bore probe G6500 (result row or workplace, diameter, depth).", "expect_contains": ["D", "L"]}
+{"prompt": "Should nxt expose bore probing as G6500.g or as probe-workpiece.g called via M98? Prefer the G-code form.", "expect_contains": ["G6500"]}
+{"prompt": "Show the correct RHS form to allocate an nxt global array with vector() in RRF meta G-code.", "expect_contains": ["vector("]}
+{"prompt": "In CNC mode, rewrite this broken loop guard using braces: while (iterations < #move.axes)", "expect_contains": ["while {"]}
+{"prompt": "Give the RRF 3.7 primary motion-system guard used at the top of user-callable nxt M/G macros.", "expect_contains": ["inputs[state.thisInput]"]}
+{"prompt": "Which tool-change hook files must NOT use the inputs[state.thisInput].active early-return guard?", "expect_contains": ["tpre"]}
+{"prompt": "What parking command should nxt use for a safe Z park before probing?", "expect_contains": ["G27"]}
+{"prompt": "G83 peck drilling in nxt: which parameters are required on first use after G80?", "expect_contains": ["Z", "R", "Q", "F"]}
+{"prompt": "How do nxt wrapper macros extend stock M3 spindle control without replacing it?", "expect_contains": ["M3.9"]}
+{"prompt": "On nxt branch v0.7.0, which major RRF line is the developer evaluation reference?", "expect_contains": ["3.7"]}
+{"prompt": "When assigning vector() to a global in nxt, must the call be wrapped in curly braces? Answer yes or no, then show an example.", "expect_contains": ["{"]}
+{"prompt": "Name the nxt custom M-code used to define a tool (replacing manual M563 tool defs).", "expect_contains": ["M4000"]}
+{"prompt": "For nxt probing cycles, should workpiece dimensions be required parameters or silent defaults?", "expect_contains": ["required"]}
+{"prompt": "Show an incorrect RRF meta pattern that builds a G0 command string and tries to execute it.", "expect_contains": ["gcode"]}
+{"prompt": "What does nxt G37 do?", "expect_contains": ["tool"]}
+{"prompt": "Cap gpOut-backed vector allocation in nxt to avoid too many array elements — show min(..., 32).", "expect_contains": ["min("]}
+{"prompt": "Clear nxt canned-cycle sticky state with which G-code?", "expect_contains": ["G80"]}
+{"prompt": "Emit an nxt abort for missing required diameter D on G6500. Brace the message.", "expect_contains": ["abort {", "G6500"]}
+{"prompt": "What approximate Object Model global size cliff should nxt stay under on SBC? Reply with KiB number.", "expect_contains": ["8"]}
+{"prompt": "Should nxtToolLife be a full vector(limits.tools) at boot in nxt-vars.g? Answer yes or no and the correct default.", "expect_contains": ["null"]}
+{"prompt": "Write the RRF 3.7 motion-system early return for a user-callable nxt macro using M99.", "expect_contains": ["inputs[state.thisInput]", "M99"]}
+{"prompt": "Refactor guidance: nxt max characters per non-comment .g line is?", "expect_contains": ["200"]}
+{"prompt": "Show correct CNC-mode while-loop braces for iterating move.axes.", "expect_contains": ["while {"]}
+{"prompt": "Name the nxt global that stores the last probing result table/vector.", "expect_contains": ["nxtProbeResults"]}
+{"prompt": "How must nxt globals be named? Prefix plus case style.", "expect_contains": ["nxt", "camel"]}
+{"prompt": "Before probing, which park command should an nxt macro use for safe Z?", "expect_contains": ["G27"]}
+{"prompt": "Is building a G0 command string in a var and executing {gcode} valid in RRF/nxt? Answer no and show the direct G0 form.", "expect_contains": ["G0"]}
+{"prompt": "Write parameter validation that requires P or U for an nxt probe macro result slot.", "expect_contains": ["abort {"]}
+{"prompt": "Tool-length cache in nxt should use which two scalar globals instead of a tools-sized vector?", "expect_contains": ["nxtToolCache"]}
+{"prompt": "Do not put the inputs[state.thisInput] guard in which tool-change hooks?", "expect_contains": ["tpre", "tfree", "tpost"]}
+{"prompt": "Show nxt-safe long M291 pattern using a var for the P message.", "expect_contains": ["var", "M291"]}

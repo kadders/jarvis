@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydantic
+httpx
+python-dotenv
+numpy
+torch
+transformers
+accelerate
+loguru
+python-multipart
+pytest

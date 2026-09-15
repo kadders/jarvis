@@ -1,0 +1,71 @@
+---
+description: Auto-apply targeted image build/push + redeploy (apply/rollout) for the changed app without extra confirmation; block destructive cluster ops unless explicitly requested.
+alwaysApply: true
+---
+
+# Build, refresh, and redeploy
+
+After code changes that affect a runnable service, the agent **should** build, push, and redeploy so the user can verify on the gpu-rig cluster. Validation happens **on Kubernetes**, not Compose — build/push the image, then redeploy the changed app. Prefer the smallest blast radius (one service / one overlay).
+
+## Preferred command
+
+Use purpose-named deploy when a catalog entry exists:
+
+```bash
+./deploy.sh --profile gpu-rig tap-collector   # or tap-testing, llm-api, ui, …
+./deploy.sh --list
+```
+
+Stacks are machine-agnostic; `--profile gpu-rig` selects lab overlays + kube env. See `docs/operations/deploy-stacks.md`.
+
+## Auto-apply (no extra confirmation)
+
+For the **targeted** redeploy of the app you just changed, the agent may run `./deploy.sh --profile gpu-rig <service>` (or equivalent `kubectl apply -k` + `rollout restart`) **automatically**, without asking for separate confirmation in that turn. Building + pushing the image and applying the owning overlay is the expected default finish for a service change — do it, then report what was applied.
+
+This auto-apply covers only the allowed, targeted operations below. Anything in **Still disallowed** continues to require the user to ask for it explicitly in the same turn.
+
+## Allowed (execute when relevant)
+
+### Images
+
+- Prefer `./deploy.sh` (builds and pushes from the stack catalog).
+- Or manual `docker build` / `docker push` to the LAN registry (`192.168.86.120:32000/...`).
+- Prefer documented image names (e.g. `jarvis_tap_collector`, `jarvis_llm_api`, `jarvis_ui`).
+
+Example (tap collector, manual):
+
+```bash
+docker build -t 192.168.86.120:32000/jarvis_tap_collector:latest \
+  -f tap_collector/Dockerfile ./tap_collector
+docker push 192.168.86.120:32000/jarvis_tap_collector:latest
+```
+
+`docker compose` is **not** required for validation. Use it only if the user explicitly asks for a local Compose run.
+
+### Kubernetes redeploy (targeted)
+
+- `./deploy.sh --profile gpu-rig <stack|service>`, or `kubectl apply -k` for the overlay that owns the changed app (e.g. `k8s/overlays/gpu-rig-telemetry/`).
+- `kubectl -n jarvis-llm rollout restart deploy/<name>` and `rollout status` when not using `deploy.sh`.
+- Read-only verification for that deploy: `kubectl -n jarvis-llm get|describe` pods/svc/deploy, `logs` (tail), and `kubectl get` for the PVC/svc you just touched.
+
+Load kubeconfig the way this lab usually does (e.g. source `$HOME/.config/gpu-rig-kubectl.env` when present) before cluster commands — the `gpu-rig` deploy profile does this automatically.
+
+## Still disallowed (unless the user explicitly asks in the same turn)
+
+- Cluster teardown or node ops: `drain`, `cordon`, `uncordon`, `kubeadm reset`, deleting nodes.
+- Broad destructive deletes: `kubectl delete namespace`, deleting unrelated releases, `helm uninstall` of shared infra.
+- Force / bypass safety: `--force`, `--grace-period=0` mass deletes, `rollout undo` across many apps without being asked.
+- Cloud account CLIs used only to reach a remote control plane (`eksctl`, `gcloud container`, etc.) unless the user asks.
+- Editing live objects with `kubectl edit` when a manifest under `k8s/` should be changed instead — prefer patching git manifests, then `apply`.
+
+## Workflow after a service change
+
+1. Change code + docs as usual.
+2. Build and push the image for that service (prefer `./deploy.sh --profile gpu-rig <service>`).
+3. Apply the matching overlay / restart the deployment — **proceed automatically**, no separate confirmation needed for this targeted step.
+4. Confirm rollout and, if useful, a quick health/`/ui/` check.
+5. Tell the user what was rebuilt/applied and how to hard-refresh the browser if static assets changed.
+
+## Manifests first
+
+Keep editing manifests under `k8s/` (and docs). Redeploy applies **repo manifests**; do not leave the cluster as the only source of truth for config.

@@ -1,0 +1,20 @@
+---
+description: Source and Kubernetes layout for Jarvis.
+alwaysApply: true
+---
+
+# Jarvis structure
+
+| Area | Path |
+| ---- | ---- |
+| LLM app | `api/`, `models/`, `utils/` |
+| ASR app | `asr/` only (do not mix LLM runtime into ASR modules) |
+| MCP | `jarvis_mcp/` |
+| TTS stub | `tts/` |
+| Chat UI | `ui/` (BFF + static SPA on **8003**) |
+| Tap collector | `tap_collector/` (MQTT ingest on **8004**) |
+| Docs | `docs/`, `mkdocs.yml`, `requirements-docs.txt`, `Dockerfile.docs` |
+| Training | `training/` (preference export, golden eval, DPO/QLoRA helpers) |
+| K8s | `k8s/<app>/` e.g. `redis`, `ollama`, `ollama-fast`, `llm-api`, `asr`, `wand`, `ui`, `mosquitto`, `tap-collector`, `cluster-dns`, `storage`, `docs`, `tts`, `llm-train`, `observability`, `base`; overlays under `k8s/overlays/` (`gpu-rig`, `gpu-rig-ui`, `gpu-rig-llm`, `gpu-rig-telemetry`, `gpu-rig-dns`, `microk8s`) |
+
+Shared caches: **`cache/build/pip`**, **`cache/models`**, **`cache/redis`**, **`cache/ollama`**, **`cache/scratch`**, **`cache/pytest`**.

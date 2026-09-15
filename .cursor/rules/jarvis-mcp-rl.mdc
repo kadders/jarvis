@@ -1,0 +1,18 @@
+---
+description: Prefer Jarvis MCP for feedback / reinforcement learning signals
+alwaysApply: true
+---
+
+# Jarvis MCP (reinforcement learning on the local model)
+
+When Jarvis MCP tools are available (`jarvis_*`), use them so learning stays on the **local Ollama model** (not Cursor cloud):
+
+1. Ask with **`jarvis_ask_local`** (or **`jarvis_submit_event`**). Replies are from local Jarvis; `meta.learning_applied` is true when prior corrections were injected.
+2. After each Jarvis call (and after meaningful agent tasks), call **`jarvis_log_outcome`** with the **call**, **end result**, and a short **logic** note so trajectories are stored for training. Use `rating: 1` when the outcome was good, `0` for observation, `-1` when wrong (include **`correction`**).
+3. If a Jarvis answer is wrong and you did not already log a correction via step 2, call **`jarvis_submit_feedback`** with `rating: -1`, a **`correction`**, and the **`event_id`** from step 1.
+4. If the answer is notably good, **`jarvis_submit_feedback`** with `rating: 1` and that `event_id` (or rely on **`jarvis_log_outcome`** with `rating: 1`).
+5. Check **`jarvis_feedback_stats`** when useful.
+
+Project hooks (`.cursor/hooks.json`) also auto-post MCP call/results and agent-stop transcripts to **`POST /api/v1/feedback`** — still call **`jarvis_log_outcome`** for the clearest call→result→logic record.
+
+MCP always sets `prefer_local` so cloud fallback is skipped for these calls. Do not invent feedback for uncertain cases. Weight updates (DPO) are a separate offline job; online learning is few-shot injection from this feedback store.

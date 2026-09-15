@@ -1,0 +1,19 @@
+---
+description: Default Kubernetes ConfigMap + hot-reload pattern for new Python services
+alwaysApply: false
+---
+
+# ConfigMap hot-reload (default for new FastAPI / Python containers)
+
+When adding or changing a **Python** service deployed under **`k8s/`** that reads configuration from the environment:
+
+1. Prefer a **ConfigMap** plus **`envFrom`** for initial env.
+2. Mount the **same** ConfigMap read-only at **`/etc/jarvis/config`** (one file per key).
+3. Set **`JARVIS_CONFIG_DIR=/etc/jarvis/config`** and **`JARVIS_CONFIG_RELOAD_INTERVAL_S`** (see **`utils/k8s_config_reload.py`**).
+4. On app startup, run **`run_mounted_config_poll_loop`** when **`JARVIS_CONFIG_DIR`** is set; use **`app.state.config_reload_lock`** and an **`on_rebind`** that rebuilds handlers/clients.
+
+Document changes in **`docs/operations/kubernetes-config-hot-reload.md`** and **`docs/reference/environment-variables.md`**.
+
+**Copies:** If the Docker build context is **`asr/`**, **`tts/`**, or **`ui/`**, keep **`k8s_config_reload.py`** in sync with **`utils/k8s_config_reload.py`**.
+
+Non-Python containers (Ollama, Redis, nginx) do **not** use this pattern; use rollout restart or an operator instead.

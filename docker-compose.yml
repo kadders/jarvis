@@ -1,0 +1,273 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - ./cache/redis/data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+
+  # "Big" Ollama tier: default MODEL_NAME is llama3.1:8b (matches K8s PoC on
+  # ollama/ollama:0.4.7). gpt-oss:20b needs a newer Ollama image. On a multi-GPU
+  # host, grant 2-3 GPUs to this container. Pin the image tag in production.
+  ollama:
+    image: ollama/ollama:0.4.7
+    volumes:
+      - ./cache/ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_FLASH_ATTENTION=0
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+
+  # Optional fast tier; enable with `--profile multi-llm`:
+  #   docker compose --profile multi-llm up -d
+  ollama_fast:
+    image: ollama/ollama:0.4.7
+    profiles: ["multi-llm"]
+    volumes:
+      - ./cache/ollama-fast:/root/.ollama
+    ports:
+      - "11435:11434"
+    environment:
+      - OLLAMA_FLASH_ATTENTION=0
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+
+  llm_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jarvis_llm_api:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+      - ./cache/build/pip:/pip-cache
+      - ./cache/models/llm_model:/app/models/llm_model:ro
+      - ./cache/jarvis_images:/app/cache/jarvis_images
+    env_file:
+      - .env
+    environment:
+      - MODEL_PATH=/app/models/llm_model
+      - MODEL_TYPE=ollama
+      - MODEL_NAME=llama3.1:8b
+      - OLLAMA_BASE_URL=http://ollama:11434/v1
+      # The fast tier vars are read only if the ollama_fast service is up
+      # (compose profile multi-llm); otherwise they are unused.
+      - MODEL_NAME_FAST=llama3.2:3b
+      - OLLAMA_FAST_BASE_URL=http://ollama_fast:11434/v1
+      - IDEMPOTENCY_BACKEND=redis
+      - REDIS_URL=redis://redis:6379/0
+      - JARVIS_IMAGE_DIR=/app/cache/jarvis_images
+      - JARVIS_OCR_ENGINE=paddle
+      - JARVIS_OCR_DETECTOR=onnx
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+    depends_on:
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  asr_service:
+    build:
+      context: ./asr
+      dockerfile: Dockerfile
+    image: jarvis_asr_service:latest
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./asr:/app
+      - ./shared:/shared
+      - ./cache/build/pip:/pip-cache
+      - ./cache/models/asr_model:/app/models/asr_model:ro
+    env_file:
+      - .env
+    environment:
+      - ASR_MODEL_PATH=/app/models/asr_model
+      - AUDIO_INPUT_DIR=/shared/audio_input
+      - AUDIO_OUTPUT_DIR=/shared/audio_output
+      - TRANSCRIPTIONS_DIR=/shared/transcriptions
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+    depends_on:
+      - llm_api
+
+  wand_service:
+    build:
+      context: ./wand
+      dockerfile: Dockerfile
+    image: jarvis_wand_service:latest
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./wand:/app
+      - ./cache/build/pip:/pip-cache
+      - ./cache/models/wand_gesture:/app/models/wand_gesture
+    env_file:
+      - .env
+    environment:
+      - WAND_API_HOST=0.0.0.0
+      - WAND_API_PORT=8002
+      - WAND_ASR_BASE_URL=http://asr_service:8001
+      - WAND_GESTURE_MODEL_PATH=/app/models/wand_gesture
+      - WAND_ONTOLOGY_PATH=/app/data/ontology/spells.json
+      - WAND_PARK_GESTURES_PATH=/app/data/park/gestures.json
+      - WAND_CLIPS_MANIFEST_PATH=/app/data/clips/manifest.yaml
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+    depends_on:
+      - asr_service
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8002 --reload
+
+  jarvis_mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jarvis_llm_api:latest
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./:/app
+      - ./cache/build/pip:/pip-cache
+    env_file:
+      - .env
+    environment:
+      - JARVIS_LLM_BASE_URL=http://llm_api:8000/api/v1
+      - JARVIS_OCR_API_BASE_URL=http://llm_api:8000/api/v1
+      - JARVIS_MCP_TRANSPORT=streamable-http
+      - JARVIS_MCP_HOST=0.0.0.0
+      - JARVIS_MCP_PORT=8765
+    command: python -m jarvis_mcp
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+    depends_on:
+      - llm_api
+
+  ui_service:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    image: jarvis_ui:latest
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./ui:/app
+      - ./cache/build/pip:/pip-cache
+    env_file:
+      - .env
+    environment:
+      - JARVIS_UI_HOST=0.0.0.0
+      - JARVIS_UI_PORT=8003
+      - JARVIS_LLM_BASE_URL=http://llm_api:8000
+      - JARVIS_UI_LLM_TIMEOUT_S=120
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+    depends_on:
+      - llm_api
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+
+  # Optional MQTT telemetry stack (tap-testing → Mosquitto → tap_collector):
+  #   docker compose --profile telemetry up -d mosquitto tap_collector
+  mosquitto:
+    image: eclipse-mosquitto:2
+    profiles: ["telemetry"]
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./tap_collector/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+
+  tap_collector:
+    build:
+      context: ./tap_collector
+      dockerfile: Dockerfile
+    image: jarvis_tap_collector:latest
+    profiles: ["telemetry"]
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./tap_collector:/app
+      - ./cache/build/pip:/pip-cache
+      - ./cache/tap_sessions:/app/cache/tap_sessions
+      # Optional: sibling tap-testing for full analyze_tap_data on session end
+      - ../tap-testing:/tap-testing:ro
+    env_file:
+      - .env
+    environment:
+      - TAP_COLLECTOR_HOST=0.0.0.0
+      - TAP_COLLECTOR_PORT=8004
+      - TAP_COLLECTOR_MQTT_HOST=mosquitto
+      - TAP_COLLECTOR_MQTT_PORT=1883
+      - TAP_COLLECTOR_SESSION_DIR=/app/cache/tap_sessions
+      - JARVIS_LLM_BASE_URL=http://llm_api:8000/api/v1
+      - TAP_COLLECTOR_LLM_FORWARD=false
+      - PYTHONPATH=/app:/tap-testing
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+    depends_on:
+      - mosquitto
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8004 --reload
+
+  oximeter_collector:
+    build:
+      context: ./oximeter_collector
+      dockerfile: Dockerfile
+    image: jarvis_oximeter_collector:latest
+    profiles: ["telemetry"]
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./oximeter_collector:/app
+      - ./cache/build/pip:/pip-cache
+      - ./cache/oximeter:/app/cache/oximeter
+    env_file:
+      - .env
+    environment:
+      - OXI_COLLECTOR_HOST=0.0.0.0
+      - OXI_COLLECTOR_PORT=8005
+      - OXI_COLLECTOR_MQTT_HOST=mosquitto
+      - OXI_COLLECTOR_MQTT_PORT=1883
+      - OXI_COLLECTOR_STORE_DIR=/app/cache/oximeter
+      - JARVIS_LLM_BASE_URL=http://llm_api:8000/api/v1
+      - OXI_COLLECTOR_LLM_FORWARD=false
+    restart: unless-stopped
+    networks:
+      - jarvis_network
+    depends_on:
+      - mosquitto
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8005 --reload
+
+networks:
+  jarvis_network:
+    driver: bridge
+
+volumes:
+  shared:
+    driver: local

@@ -1,0 +1,77 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables
+.env
+deploy.env
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Model files (can be large)
+models/llm_model/
+models/asr_model/
+test_path/
+
+# Tests and coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Local caches and scratch (large / generated) — do not commit cache/
+cache/
+
+# Logs
+*.log
+
+# MkDocs output
+site/
+
+# Docker
+.docker/
+
+# Local Redis data (Docker Compose)
+cache/redis/data/
+
+# Tap collector session JSON
+cache/tap_sessions/
+
+# Wand generated artifacts
+wand/data/training_samples.jsonl
+wand/data/clips/raw/
+wand/.venv/
+wand/edge/pi/.venv/
+tap_collector/.venv/
+ 

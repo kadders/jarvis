@@ -1,0 +1,20 @@
+---
+description: When jarvis OCR REST or MCP streamable-HTTP behavior changes, sync sibling tiny-ocr firmware and Python client.
+globs:
+  - jarvis_mcp/**/*
+  - docs/services/ocr.md
+alwaysApply: false
+---
+
+# tiny-ocr client sync (jarvis)
+
+OCR and related vision traffic use **REST** (`POST /api/v1/images`, …) plus **MCP** `tools/call` over **streamable HTTP**, documented in **`docs/services/ocr.md`**.
+
+The sibling repo **tiny-ocr** implements **two** clients that must track this contract:
+
+- `tiny-ocr/firmware/src/ocr/` (ESP32)
+- `tiny-ocr/client/tiny_ocr_client/` (Python CLI / library)
+
+**Rule:** If you change anything that affects **client-visible** MCP traffic (JSON-RPC fields, tool names/arguments, headers, URL paths, status codes, error bodies, auth) or **REST image upload** semantics, update **tiny-ocr** in the same change batch (or file a linked issue/PR before release) so both clients and the docs stay aligned.
+
+Also update **`docs/services/ocr.md`** whenever the authoritative contract changes.

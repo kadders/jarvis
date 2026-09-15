@@ -1,0 +1,26 @@
+---
+description: Keep docs/architecture in sync when system topology or cross-cutting design changes.
+globs: docs/architecture/**/*.md, api/main.py, api/routers/**/*.py, jarvis_mcp/**/*.py, utils/ocr/**/*.py, docker-compose.yml, k8s/**/*.yaml
+---
+
+# Architecture documentation sync
+
+When you change **system topology**, **cross-service boundaries**, or **major request paths**, update **`docs/architecture/`** in the **same PR** (or a tightly linked follow-up) so the site stays accurate.
+
+## In scope (update architecture docs when you touch)
+
+- **New or removed runtime components** (e.g. new services, routers under **`api/`**, MCP transports, background workers).
+- **Request / data flows** that agents or operators rely on (LLM events, OCR upload → recognize → relay, MCP → HTTP mapping).
+- **Shared infrastructure** (Redis idempotency, image store, GPU vs CPU inference notes, Compose/Kubernetes wiring that changes ports or dependencies).
+- **`utils/ocr/`** pipeline shape (stages, parallelism, failure partial-success semantics).
+- **`jarvis_mcp`** process model (**stdio** vs **streamable-http** vs **both**).
+
+## What to update
+
+1. **`docs/architecture/index.md`** (primary) — deployment diagram, sequence workflows, tables for components and data boundaries. Add or adjust **Mermaid** diagrams when flows change (keep node IDs **alphanumeric**; follow Material/Mermaid constraints).
+2. **`mkdocs.yml`** — if you add a new page under **`docs/architecture/`**, register it under **Architecture** in **`nav`**.
+3. Run **`mkdocs build --strict`** — architecture pages must not introduce broken internal links (same bar as **`Dockerfile.docs`**).
+
+Also align **narrow normative specs** (e.g. **`docs/services/ocr.md`**) and this **architecture** overview: architecture explains *why and how things connect*; service specs remain *contractual*.
+
+Cross-rule: general MkDocs hygiene is **`.cursor/rules/docs-and-build-sync.mdc`**.

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "jarvis": {
+      "command": "/media/kad/data/repositories/jarvis/venv/bin/python",
+      "args": ["-m", "jarvis_mcp"],
+      "cwd": "/media/kad/data/repositories/jarvis",
+      "env": {
+        "JARVIS_LLM_BASE_URL": "http://llm.jarvis.lan/api/v1",
+        "JARVIS_MCP_TRANSPORT": "stdio",
+        "JARVIS_LLM_TIMEOUT_S": "120"
+      }
+    }
+  }
+}

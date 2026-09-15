@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterMCPExecution": [
+      {
+        "command": ".cursor/hooks/jarvis_log_mcp.py",
+        "timeout": 15
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/jarvis_log_stop.py",
+        "timeout": 20,
+        "loop_limit": 0
+      }
+    ]
+  }
+}

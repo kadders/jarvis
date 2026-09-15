@@ -1,0 +1,67 @@
+site_name: Jarvis
+site_description: LLM API, ASR, MCP, and operations documentation
+docs_dir: docs
+site_dir: site
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+plugins:
+  - search
+  - mermaid2
+markdown_extensions:
+  - toc:
+      permalink: true
+  - attr_list
+  - pymdownx.superfences
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - API:
+      - LLM events: api/llm-events.md
+      - OpenAI compatible: api/openai-compat.md
+      - ASR: api/asr.md
+      - Wand: api/wand.md
+      - TTS: api/tts.md
+      - Chat UI: api/ui.md
+  - MCP:
+      - Overview: mcp.md
+      - Tool payloads: mcp-payloads.md
+  - ASR streaming: asr-streaming.md
+  - Wand:
+      - Overview: wand/index.md
+      - Optics: wand/optics.md
+      - Spell catalog: wand/spell-catalog.md
+  - Guides:
+      - Guides index: guides/index.md
+      - SLOs and expectations: guides/slos.md
+  - Architecture: architecture/index.md
+  - Services:
+      - Overview: services/index.md
+      - OCR (spec): services/ocr.md
+      - Tap collector: services/tap-collector.md
+      - Tap stream: services/tap-stream.md
+      - Klipper telemetry (future): services/klipper-telemetry.md
+  - Operations:
+      - Docker: operations/docker.md
+      - Deploy stacks: operations/deploy-stacks.md
+      - LLM tiers and hardware: operations/llm-tiers-and-hardware.md
+      - Kubernetes: operations/kubernetes.md
+      - Cluster DNS: operations/cluster-dns.md
+      - ConfigMap hot-reload: operations/kubernetes-config-hot-reload.md
+      - Local registry: operations/registry.md
+      - Redis: operations/redis.md
+      - Observability: operations/observability.md
+      - Feedback and fine-tuning: operations/feedback-and-finetune.md
+      - Cursor tunnel fallback: operations/cursor-tunnel.md
+  - Reference:
+      - Environment variables: reference/environment-variables.md

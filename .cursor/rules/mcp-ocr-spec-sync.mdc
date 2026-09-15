@@ -1,0 +1,17 @@
+---
+description: Keep OCR REST, MCP tool contracts, and normative docs in sync.
+globs: jarvis_mcp/**/*.py, api/routers/**/*ocr*, api/routers/images.py, docs/mcp.md, docs/mcp-payloads.md, docs/services/ocr.md, mkdocs.yml
+---
+
+# MCP + OCR spec sync
+
+When you change **any** of the following, do it in the **same PR** (or explicitly linked follow-up) with matching documentation:
+
+1. **`docs/services/ocr.md`** — normative REST + MCP OCR behavior, JSON examples, error codes, env vars, **`## Spec revision history`** (append a **dated** row listing **additions / changes / removals**).
+2. **`docs/mcp-payloads.md`** — MCP tool arguments, return JSON shapes, HTTP mapping, transport env vars.
+3. **`docs/mcp.md`** — high-level summary stays aligned; add a revision note if MCP-wide behavior changes.
+4. **`AGENTS.md`** — if repo-level summaries change.
+5. **`mkdocs.yml`** — update **`nav`** when you add, rename, or remove doc pages touched by this work (e.g. new files under **`docs/`**). Do not leave orphan or broken nav entries.
+6. **MkDocs verification** — run **`mkdocs build --strict`** (same as **`Dockerfile.docs`**) so strict link/nav checks pass before merge. Follow **`.cursor/rules/docs-and-build-sync.mdc`** for the full MkDocs + `docs/` policy (cross-links must resolve inside the `docs/` tree unless mirrored there).
+
+Also update **`docs/reference/environment-variables.md`** when adding or renaming OCR/MCP/relay settings in **`utils/config.py`**.

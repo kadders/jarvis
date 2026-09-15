@@ -1,0 +1,17 @@
+---
+description: Jarvis product context — services, Ollama, idempotency, docs.
+alwaysApply: true
+---
+
+# Jarvis overview
+
+- **LLM API**: FastAPI at repo root; primary model path **Ollama** + **`llama3.1:8b`** default (OpenAI-compatible HTTP; **`gpt-oss:20b`** after Ollama bump); optional Hugging Face / `mock`.
+- **Idempotency**: `POST /api/v1/events` honors **`Idempotency-Key`**; backends **`memory`** or **`redis`** (`REDIS_URL`).
+- **Wand**: Interactive wand FastAPI on **8002** (`wand/`, `docs/wand/`).
+- **Chat UI**: browser chat BFF on **8003** (`ui/`); proxies LLM events; optional **`k8s/ui`**.
+- **ASR**: `asr/` service; WebSocket streaming documented in **`docs/asr-streaming.md`**.
+- **MCP**: `python -m jarvis_mcp` with **`JARVIS_LLM_BASE_URL`** (default `http://127.0.0.1:8000/api/v1`).
+- **Docs**: MkDocs in **`docs/`**; ship static site via **`Dockerfile.docs`** / **`k8s/docs/`**.
+- **Kubernetes**: core **`k8s/`** = redis + ollama (PVC) + ollama-fast (StatefulSet) + llm-api; live PoC overlay **`k8s/overlays/gpu-rig/`** (namespace **`jarvis-llm`**, fridge NFS). Optional **`k8s/ui`**. Purpose stacks: **`./deploy.sh <stack|service>`** (`docs/operations/deploy-stacks.md`); agents redeploy via **`build-and-redeploy.mdc`**.
+
+When adding features, keep **AGENTS.md** and **docs** in sync with behavior and env vars.

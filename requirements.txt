@@ -1,0 +1,48 @@
+# Updated requirements
+# Generated on Wed May 14 02:56:44 PM PDT 2025
+# Updated requirements
+# Generated on Wed May 14 07:47:53 AM PDT 2025
+# Updated requirements
+# Generated on Wed May 14 07:16:26 AM PDT 2025
+# Updated requirements
+# Generated on Tue May 13 09:34:47 PM PDT 2025
+# Core API dependencies
+fastapi==0.115.12
+uvicorn==0.34.2
+starlette>=0.40.0,<0.47.0
+pydantic==2.11.4
+pydantic-settings==2.9.1
+httpx==0.28.1
+python-dotenv==1.1.0
+
+# ML dependencies
+numpy==2.2.5
+torch==2.7.0
+transformers==4.51.3
+accelerate==1.6.0
+
+# Utilities
+loguru==0.7.3
+python-multipart==0.0.20
+pyaudio==0.2.14
+Pillow>=10.0.0
+onnxruntime>=1.18.0
+
+# LLM HTTP client (Ollama OpenAI-compatible API)
+openai>=1.30.0
+
+# Idempotency (optional redis backend)
+redis>=5.0.0
+
+# Metrics (Prometheus /metrics)
+prometheus-client>=0.20.0
+
+# Testing
+pytest==8.3.5
+black>=24.0.0
+
+# MCP bridge (stdio): python -m jarvis_mcp
+mcp>=1.2.0,<2.0.0
+
+# Memory management
+psutil==7.0.0

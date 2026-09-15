@@ -1,0 +1,30 @@
+---
+description: Keep documentation and deployment artifacts aligned with code changes.
+alwaysApply: true
+---
+
+# Docs and build sync
+
+## MkDocs site (`docs/` + `mkdocs.yml` + docs Docker)
+
+The published manual is built with **MkDocs** (`mkdocs.yml`, sources under **`docs/`**, image **`Dockerfile.docs`** using **`requirements-docs.txt`**). When you add or change **any** user-facing documentation (API specs, services, env tables, MCP payloads, operations guides, etc.), you must keep the **MkDocs project** consistent:
+
+1. **Markdown under `docs/`** — add or edit the relevant `.md` files (do not leave the site pointing at stale or missing pages).
+2. **`mkdocs.yml`** — update **`nav`** when you add/remove/rename doc files or introduce a new section; keep hierarchy readable and avoid orphan pages (nothing linked only from outside `nav` if you expect it to be discoverable).
+3. **Cross-links** — prefer links to other **`docs/`** pages using **relative** paths that MkDocs can resolve (e.g. `services/ocr.md`, `../mcp.md`). Avoid linking to repo-root files outside `docs/` (e.g. `AGENTS.md`, `../tiny-ocr/...`) unless they are copied or mirrored under `docs/`, or **`mkdocs build --strict`** will fail in **`Dockerfile.docs`**. For stable fragment links, enable **`attr_list`** in **`mkdocs.yml`** and use explicit heading ids (e.g. `## Response delivery {#response_delivery}`).
+4. **Verify** — before finishing, run **`mkdocs build --strict`** locally (same command as in **`Dockerfile.docs`**) so broken nav links and strict warnings are caught before the docs image build fails.
+
+---
+
+Update **`docs/`** (MkDocs markdown) when you change:
+
+- Public HTTP APIs (`api/`, `asr/`) or **WebSocket** streaming protocol
+- **Env vars** (`utils/config.py`, `asr/utils/config.py`)
+- **Idempotency** or **Redis** behavior
+- **Docker** / **Compose** / **`Dockerfile.docs`**
+- **Kubernetes** manifests under **`k8s/`**
+- **Architecture** (`docs/architecture/`) — deployment views, workflows, and component boundaries when topology or cross-cutting behavior changes — see **`.cursor/rules/architecture-docs-sync.mdc`**
+- **MCP** tools (`jarvis_mcp/`)
+- **OCR / vision REST + MCP** (`api/routers/images.py`, `api/routers/ocr.py`, `docs/services/ocr.md`, `docs/mcp-payloads.md`): sibling **tiny-ocr** must stay in sync when contracts change — see **`.cursor/rules/mcp-ocr-spec-sync.mdc`** and **`.cursor/rules/tiny-ocr-mcp-client-sync.mdc`** (if present).
+
+Prefer one PR that includes code + docs + manifests when the operator experience changes.

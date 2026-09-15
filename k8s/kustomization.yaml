@@ -1,0 +1,11 @@
+# Full-stack: Redis + Ollama (big Deployment + fast StatefulSet) + LLM API.
+# Generic apply: kubectl apply -k k8s/
+# Verified gpu-rig PoC (namespace jarvis-llm + fridge NFS + registry):
+#   kubectl apply -k k8s/overlays/gpu-rig/
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - redis
+  - ollama
+  - ollama-fast
+  - llm-api

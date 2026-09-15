@@ -1,0 +1,25 @@
+# Expose LAN DNS on a pinned MetalLB IP (UDP+TCP 53).
+apiVersion: v1
+kind: Service
+metadata:
+  name: cluster-dns
+  labels:
+    app.kubernetes.io/name: jarvis-cluster-dns
+    app.kubernetes.io/component: lan-dns
+  annotations:
+    # .5 was previously tap-collector's LB IP; MetalLB still treats it as
+    # that Service's sharing key, so DNS uses a never-shared address.
+    metallb.universe.tf/loadBalancerIPs: "192.168.86.9"
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: jarvis-cluster-dns
+  ports:
+    - name: dns-udp
+      port: 53
+      targetPort: dns-udp
+      protocol: UDP
+    - name: dns-tcp
+      port: 53
+      targetPort: dns-tcp
+      protocol: TCP

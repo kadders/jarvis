@@ -1,0 +1,12 @@
+# Portable cluster DNS (CoreDNS). Site MetalLB pins via profile overlay.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../cluster-dns
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: jarvis
+      app.kubernetes.io/component: dns
+    includeSelectors: false

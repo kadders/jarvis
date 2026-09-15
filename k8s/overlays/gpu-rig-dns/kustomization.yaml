@@ -1,0 +1,30 @@
+# Optional LAN DNS for gpu-rig (namespace jarvis-llm).
+# Authoritative CoreDNS for jarvis.lan on a pinned MetalLB IP.
+# Requires MetalLB pool covering 192.168.86.9 (and the service IPs below).
+#
+# Operator:
+#   kubectl apply -k k8s/overlays/gpu-rig-dns/
+#   # Then conditional-forward jarvis.lan -> 192.168.86.9 on the LAN router
+#   # (or point clients at 192.168.86.9 as DNS). See docs/operations/cluster-dns.md
+#
+# Names (after router forward):
+#   ui.jarvis.lan               chat UI
+#   llm.jarvis.lan / openai.jarvis.lan   LLM API OpenAI-compat (/v1) + events
+#   mqtt.jarvis.lan:1883        Mosquitto
+#   tap.jarvis.lan/ui/          tap collector UI
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: jarvis-llm
+
+resources:
+  - ../../cluster-dns
+
+patches:
+  - path: patch-service-lb.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: jarvis
+      app.kubernetes.io/managed-by: gpu-rig
+    includeSelectors: false

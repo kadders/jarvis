@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tap Telemetry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.min.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <header class="top">
+    <div class="brand-wrap">
+      <h1 class="brand">Tap Telemetry</h1>
+      <p class="lede">Live-spindle &amp; homing · tool segments · resonance / RPM analytics</p>
+    </div>
+    <div class="top-actions">
+      <span class="pill" id="health-pill" data-state="checking">…</span>
+      <button type="button" class="ghost" id="mqtt-stream-btn">MQTT stream</button>
+      <label class="replace-lib">
+        <input type="checkbox" id="lib-replace" />
+        Replace entire library
+      </label>
+      <label class="upload">
+        <input type="file" id="lib-input" accept=".tools,.json,.zip,application/json,application/zip" hidden />
+        <span class="upload-btn secondary">Import tool library</span>
+      </label>
+      <label class="upload">
+        <input type="file" id="file-input" accept=".csv,.zip,text/csv,application/zip" hidden />
+        <span class="upload-btn">Import CSV / ZIP</span>
+      </label>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="rail">
+      <div class="rail-head">
+        <h2>Sessions</h2>
+        <button type="button" class="ghost" id="refresh-btn">Refresh</button>
+      </div>
+      <ul class="session-list" id="session-list"></ul>
+      <p class="hint">Import a <code>homing.csv</code> or a run ZIP (tool-events, modbus, run-meta).</p>
+
+      <div class="rail-head tools-head">
+        <h2>Tool library <span class="muted" id="lib-count"></span></h2>
+        <button type="button" class="ghost" id="lib-refresh-btn">Refresh</button>
+      </div>
+      <input type="search" id="lib-search" class="lib-search" placeholder="Search tools…" autocomplete="off" />
+      <ul class="session-list tool-list" id="tool-list"></ul>
+      <p class="hint">With a session selected, click a tool here to map it onto a segment. Otherwise opens tool detail.</p>
+    </aside>
+
+    <section class="detail" id="detail">
+      <div class="empty" id="empty-state">
+        <p>Select a session or import a live-spindle homing CSV / run ZIP.</p>
+      </div>
+      <div class="panel hidden" id="panel">
+        <div class="meta">
+          <div>
+            <h2 id="sess-title">—</h2>
+            <p class="sub" id="sess-sub"></p>
+            <div class="live-status" id="live-status">
+              <span class="rec-pill" id="rec-pill" data-state="idle">idle</span>
+              <span class="muted" id="live-status-detail">—</span>
+            </div>
+            <div class="sess-meta-edit">
+              <label class="notes-field">
+                <span>Notes</span>
+                <input type="text" id="sess-notes" class="lib-search" placeholder="Optional notes…" autocomplete="off" />
+              </label>
+              <div class="sess-actions">
+                <button type="button" class="ghost" id="save-notes-btn">Save notes</button>
+                <button type="button" class="ghost" id="stop-sess-btn">Force stop</button>
+                <button type="button" class="ghost danger" id="delete-sess-btn">Delete</button>
+              </div>
+            </div>
+          </div>
+          <div class="analysis" id="analysis-card"></div>
+        </div>
+
+        <div class="offset-panel" id="offset-panel">
+          <h3>Tool offsets</h3>
+          <div id="offset-card" class="offset-card">
+            <span class="label">No live tool offsets yet</span>
+          </div>
+        </div>
+
+        <div class="seg-panel" id="seg-panel">
+          <div class="seg-toolbar">
+            <div>
+              <h3>Map tools → ADXL</h3>
+              <p class="seg-hint" id="seg-hint">
+                1) Add a time slice · 2) pick a Fusion tool · 3) optional Ref RPM · 4) <strong>Save &amp; reanalyze</strong>
+              </p>
+            </div>
+            <div class="seg-actions">
+              <button type="button" class="ghost" id="add-seg-btn">Add segment</button>
+              <button type="button" class="upload-btn" id="save-seg-btn">Save &amp; reanalyze</button>
+            </div>
+          </div>
+          <p class="hint" id="seg-empty-cta">
+            With a session open: click a tool in the left <strong>Tool library</strong> to map it,
+            or use <strong>Add segment</strong> then pick from the table. Finish with
+            <strong>Save &amp; reanalyze</strong>. ZIP imports with <code>tool-events.jsonl</code> auto-seed slices.
+          </p>
+        </div>
+        <div class="seg-table-wrap">
+          <table class="seg-table" id="seg-table">
+            <thead>
+              <tr>
+                <th>t₀</th>
+                <th>t₁</th>
+                <th>Tool #</th>
+                <th>Library tool</th>
+                <th>Flutes</th>
+                <th>Ref RPM</th>
+                <th>Source</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="seg-body"></tbody>
+          </table>
+        </div>
+        <div class="seg-detail" id="seg-detail"></div>
+
+        <div class="force-panel" id="force-panel">
+          <div class="force-toolbar">
+            <div>
+              <h3>Cutting load estimate</h3>
+              <p class="seg-hint">
+                Fusion feed/chipload · WoC 1.2–1.5 mm · DoC ≤ 4.5 mm · engineering approximation
+              </p>
+            </div>
+            <label class="seg-select-label">
+              Material
+              <select id="force-material">
+                <option value="6061 aluminum" selected>6061 aluminum</option>
+                <option value="7075 aluminum">7075 aluminum</option>
+                <option value="A36 steel">A36 steel</option>
+              </select>
+            </label>
+          </div>
+          <div id="force-card" class="force-card"></div>
+        </div>
+
+        <div class="tool-legend" id="tool-legend"></div>
+
+        <div class="sim-panel" id="sim-panel">
+          <div class="sim-toolbar">
+            <div>
+              <h3>Replay path (XYZ)</h3>
+              <p class="seg-hint" id="sim-meta">Load motion samples for rough toolpath replay.</p>
+            </div>
+            <div class="sim-actions">
+              <button type="button" class="ghost" id="sim-replay-btn">Replay from log</button>
+              <button type="button" class="ghost" id="sim-reset-view-btn" title="Reset camera">Reset view</button>
+            </div>
+          </div>
+          <div class="sim-body">
+            <canvas id="sim-canvas" width="640" height="360" aria-label="3D motion replay"></canvas>
+            <div class="sim-controls">
+              <p class="seg-hint sim-nav-hint">Scroll to zoom · drag to orbit</p>
+              <div class="sim-playback">
+                <button type="button" class="ghost" id="sim-play-btn" disabled>Play</button>
+                <label class="seg-select-label sim-speed-label">
+                  Speed
+                  <select id="sim-speed" disabled>
+                    <option value="1" selected>1×</option>
+                    <option value="2">2×</option>
+                    <option value="4">4×</option>
+                    <option value="8">8×</option>
+                  </select>
+                </label>
+              </div>
+              <label class="seg-select-label">
+                t_s
+                <input type="range" id="sim-scrubber" min="0" max="1" step="0.01" value="0" disabled />
+              </label>
+              <span class="muted" id="sim-scrub-label">—</span>
+              <span class="muted" id="sim-axis-a"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts">
+          <div class="chart-block">
+            <h3>Time series <span class="muted" id="series-meta"></span></h3>
+            <div class="seg-overlay" id="seg-overlay"></div>
+            <div class="event-markers" id="series-markers"></div>
+            <div id="chart-series"></div>
+          </div>
+          <div class="chart-block">
+            <h3>RPM telemetry <span class="muted" id="rpm-tel-meta"></span></h3>
+            <div class="seg-overlay" id="rpm-tel-overlay"></div>
+            <div class="event-markers" id="rpm-tel-markers"></div>
+            <div id="chart-rpm-tel"></div>
+            <div class="rpm-legend" id="rpm-tel-legend"></div>
+          </div>
+          <div class="chart-block">
+            <h3>Spectrum <span class="muted" id="spectrum-meta"></span></h3>
+            <label class="seg-select-label">
+              Segment
+              <select id="spectrum-seg-select"></select>
+            </label>
+            <div id="chart-spectrum"></div>
+          </div>
+          <div class="chart-block">
+            <h3>RPM domain <span class="muted" id="rpm-meta"></span></h3>
+            <div id="chart-rpm"></div>
+            <div class="rpm-legend" id="rpm-legend"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel hidden" id="tool-panel">
+        <div class="meta">
+          <div>
+            <h2 id="tool-title">—</h2>
+            <p class="sub" id="tool-sub"></p>
+            <div class="sess-actions">
+              <button type="button" class="ghost danger" id="delete-tool-btn">Delete tool</button>
+            </div>
+          </div>
+          <div class="analysis" id="tool-card"></div>
+        </div>
+        <pre class="tool-raw" id="tool-raw"></pre>
+      </div>
+      <div class="panel hidden" id="mqtt-panel">
+        <div class="meta">
+          <div>
+            <h2>MQTT event stream</h2>
+            <p class="sub" id="mqtt-sub">Live ring buffer · JSON-key queries</p>
+          </div>
+          <div class="analysis" id="mqtt-stats"></div>
+        </div>
+        <div class="mqtt-query">
+          <label class="mqtt-field">
+            <span>Topic</span>
+            <input type="search" id="mqtt-topic" class="lib-search" placeholder="tap/milo/tool" autocomplete="off" />
+          </label>
+          <label class="mqtt-field grow">
+            <span>Where (JSON keys)</span>
+            <input type="search" id="mqtt-where" class="lib-search" placeholder='event=change, tool_number=3, session_id~imp-' autocomplete="off" />
+          </label>
+          <label class="mqtt-field grow">
+            <span>Free text</span>
+            <input type="search" id="mqtt-q" class="lib-search" placeholder="part.gcode" autocomplete="off" />
+          </label>
+          <div class="mqtt-actions">
+            <button type="button" class="upload-btn" id="mqtt-search-btn">Query</button>
+            <button type="button" class="ghost" id="mqtt-live-btn" data-live="0">Live off</button>
+            <button type="button" class="ghost danger" id="mqtt-clear-btn">Clear stream</button>
+          </div>
+        </div>
+        <p class="hint mqtt-hint">
+          Keys use dotted JSON paths into the payload (also <code>topic</code>, <code>id</code>, <code>ts</code>).
+          Operators: <code>=</code> <code>!=</code> <code>~</code> <code>&gt;</code> <code>&gt;=</code> <code>&lt;</code> <code>&lt;=</code>.
+          Comma-separate clauses (AND). Example: <code>event=change, tool_number=3</code>
+        </p>
+        <div class="mqtt-list" id="mqtt-list"></div>
+        <div class="tool-raw mqtt-detail hidden" id="mqtt-detail"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast hidden" id="toast" role="status"></div>
+  <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.iife.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="./app.js?v=20260911-sim-perf"></script>
+</body>
+</html>

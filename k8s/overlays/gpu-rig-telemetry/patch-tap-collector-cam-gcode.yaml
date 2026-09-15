@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tap-collector
+spec:
+  template:
+    spec:
+      containers:
+        - name: tap-collector
+          volumeMounts:
+            - name: cam-gcode
+              mountPath: /cam-gcode
+              readOnly: true
+      volumes:
+        - name: cam-gcode
+          persistentVolumeClaim:
+            claimName: cam-gcode
+            readOnly: true

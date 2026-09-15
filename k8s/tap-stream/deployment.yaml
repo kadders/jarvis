@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tap-stream
+  labels:
+    app.kubernetes.io/name: jarvis-tap-stream
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jarvis-tap-stream
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-tap-stream
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: tap-stream
+          image: jarvis_tap_stream:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8005
+              name: http
+          env:
+            - name: TAP_STREAM_CONFIG_DIR
+              value: /etc/tap-stream/config
+            - name: TAP_STREAM_SECRETS_DIR
+              value: /etc/tap-stream/secrets
+          volumeMounts:
+            - name: tap-stream-config
+              mountPath: /etc/tap-stream/config
+              readOnly: true
+            - name: tap-stream-secrets
+              mountPath: /etc/tap-stream/secrets
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: "250m"
+            limits:
+              memory: 1Gi
+              cpu: "2000m"
+      volumes:
+        - name: tap-stream-config
+          configMap:
+            name: jarvis-tap-stream-config
+        - name: tap-stream-secrets
+          secret:
+            secretName: jarvis-tap-stream-secret

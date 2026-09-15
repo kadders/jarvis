@@ -1,0 +1,41 @@
+# Static fridge NFS PV for tap_collector session store (imported CSVs + JSON).
+# Host path on fridge-prime: /media/kad/data/k8s/jarvis-llm/tap-sessions
+# Operator: mkdir -p that path before first apply (export already covers /media/kad/data/k8s).
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-fridge-tap-sessions
+  labels:
+    app.kubernetes.io/part-of: jarvis
+    jarvis.storage: fridge-nfs
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-storage
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.86.221
+    path: /media/kad/data/k8s/jarvis-llm/tap-sessions
+  claimRef:
+    namespace: jarvis-llm
+    name: tap-collector-sessions
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tap-collector-sessions
+  labels:
+    app.kubernetes.io/name: jarvis-tap-collector
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: nfs-storage
+  volumeName: nfs-fridge-tap-sessions

@@ -1,0 +1,22 @@
+# Mount fridge Milo recordings share at /mnt/recordings (same path as Pi TAP_VIDEO_DIR).
+# NFS root_squash maps container root → nobody; run as host uid/gid kad (1000).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tap-stream
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: tap-stream
+          volumeMounts:
+            - name: tap-recordings
+              mountPath: /mnt/recordings
+      volumes:
+        - name: tap-recordings
+          persistentVolumeClaim:
+            claimName: tap-recordings

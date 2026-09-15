@@ -1,0 +1,43 @@
+# Read-only fridge NFS PV for Fusion CAM G-code (same content as RRF gcodes -> /mnt/CAM/).
+# Host path on fridge-prime: /media/kad/data/CNC/CAM
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-cam-gcode
+  labels:
+    app.kubernetes.io/part-of: jarvis
+    jarvis.storage: fridge-nfs
+    jarvis.storage.role: cam-gcode
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-storage
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+    - ro
+  nfs:
+    server: 192.168.86.221
+    path: /media/kad/data/CNC/CAM
+  claimRef:
+    namespace: jarvis-llm
+    name: cam-gcode
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cam-gcode
+  labels:
+    app.kubernetes.io/name: jarvis-tap-collector
+    jarvis.storage.role: cam-gcode
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: nfs-storage
+  volumeName: nfs-cam-gcode

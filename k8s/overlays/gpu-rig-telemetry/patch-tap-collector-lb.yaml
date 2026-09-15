@@ -1,0 +1,18 @@
+# Expose tap-collector HTTP API on the LAN via MetalLB.
+# Name: tap.jarvis.lan / tap-collector.jarvis.lan → 192.168.86.8:80 → container 8004
+# (see docs/operations/cluster-dns.md).
+#
+# Port must be replaced via JSON6902 (not strategic merge): Service ports merge on
+# `port`, so changing 8004→80 would otherwise leave both entries named "http".
+apiVersion: v1
+kind: Service
+metadata:
+  name: tap-collector
+  labels:
+    app.kubernetes.io/name: jarvis-tap-collector
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: "192.168.86.8"
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: jarvis-tap-collector

@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telemetry-bridge
+spec:
+  template:
+    spec:
+      volumes:
+        - name: telemetry-log
+          emptyDir: null
+          persistentVolumeClaim:
+            claimName: tap-collector-sessions
+      containers:
+        - name: telemetry-bridge
+          volumeMounts:
+            - name: telemetry-log
+              mountPath: /data/telemetry
+              subPath: telemetry

@@ -1,0 +1,15 @@
+# ACL example — read-only tap-stream, write Pi publishers.
+# user tap-pi
+# topic write tap/milo/#
+# topic write cam/milo/#
+#
+# user tap-stream
+# topic read tap/+/session
+# topic read tap/+/video_overlay
+# topic read tap/+/accel/batch
+#
+# user tap-collector
+# topic read tap/#
+# topic read duet/#
+# topic read cam/#
+# topic read print/#

@@ -1,0 +1,43 @@
+# Read-write fridge NFS PV for Milo session.mp4 (same share as Pi /mnt/recordings).
+# Host path on fridge-prime: /media/kad/data/videos/milo
+# Milo mount: 192.168.86.221:/media/kad/data/videos/milo → /mnt/recordings
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-tap-recordings
+  labels:
+    app.kubernetes.io/part-of: jarvis
+    jarvis.storage: fridge-nfs
+    jarvis.storage.role: tap-recordings
+spec:
+  capacity:
+    storage: 200Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-storage
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.86.221
+    path: /media/kad/data/videos/milo
+  claimRef:
+    namespace: jarvis-llm
+    name: tap-recordings
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tap-recordings
+  labels:
+    app.kubernetes.io/name: jarvis-tap-stream
+    jarvis.storage.role: tap-recordings
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 200Gi
+  storageClassName: nfs-storage
+  volumeName: nfs-tap-recordings

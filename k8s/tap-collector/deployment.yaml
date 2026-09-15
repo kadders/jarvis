@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tap-collector
+  labels:
+    app.kubernetes.io/name: jarvis-tap-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jarvis-tap-collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-tap-collector
+    spec:
+      containers:
+        - name: tap-collector
+          image: jarvis_tap_collector:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8004
+              name: http
+          envFrom:
+            - configMapRef:
+                name: jarvis-tap-collector-config
+          # Lifespan hydrates mqtt_events + connects MQTT before :8004 accepts;
+          # hold liveness until health succeeds (avoids false kills / mid-job restarts).
+          # NFS hydrate of mqtt day files can exceed 60s — give startup ~3 minutes.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: "100m"
+            limits:
+              memory: 4Gi
+          volumeMounts:
+            - name: sessions
+              mountPath: /app/cache/tap_sessions
+      volumes:
+        - name: sessions
+          emptyDir: {}

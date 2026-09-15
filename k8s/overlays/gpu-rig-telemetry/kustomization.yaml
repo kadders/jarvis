@@ -1,0 +1,63 @@
+# Optional MQTT telemetry stack on gpu-rig (namespace jarvis-llm):
+# Mosquitto broker + tap_collector for sibling tap-testing Pi clients.
+# Session store: fridge-prime NFS (nfs-storage) — node-agnostic.
+# CAM G-code: read-only mount of fridge /media/kad/data/CNC/CAM (RRF gcodes -> /mnt/CAM/).
+# MetalLB IPs pinned: mqtt 192.168.86.7, tap 192.168.86.8, stream 192.168.86.11
+# Oximeter collector: namespace health — see k8s/overlays/gpu-rig-health/ (.12)
+# (see docs/operations/cluster-dns.md; apply k8s/overlays/gpu-rig-dns/ for LAN names).
+#
+# Operator:
+#   mkdir -p /media/kad/data/k8s/jarvis-llm/tap-sessions   # on fridge-prime
+#   docker build -t 192.168.86.120:32000/jarvis_tap_collector:latest -f tap_collector/Dockerfile ./tap_collector
+#   docker push 192.168.86.120:32000/jarvis_tap_collector:latest
+#   docker build -t 192.168.86.120:32000/jarvis_tap_stream:latest -f tap_stream/Dockerfile ./tap_stream
+#   docker push 192.168.86.120:32000/jarvis_tap_stream:latest
+#   kubectl apply -k k8s/overlays/gpu-rig-telemetry/
+#
+# Pi: TAP_MQTT_HOST=mqtt.jarvis.lan TAP_MQTT_PORT=1883
+# UI:  http://tap.jarvis.lan/ui/
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: jarvis-llm
+
+resources:
+  - ../../mosquitto
+  - ../../tap-collector
+  - ../../tap-stream
+  - ../../redpanda
+  - ../../telemetry-bridge
+  - nfs-tap-sessions.yaml
+  - nfs-cam-gcode.yaml
+  - nfs-tap-recordings.yaml
+
+patches:
+  - path: patch-mosquitto-lb.yaml
+  - path: patch-tap-collector-lb.yaml
+  - path: patch-tap-stream-lb.yaml
+  - path: patch-telemetry-bridge-nfs.yaml
+  - path: patch-tap-collector-telemetry-log.yaml
+  - target:
+      kind: Service
+      name: tap-collector
+    path: patch-tap-collector-ports.yaml
+  - path: patch-tap-stream-recordings.yaml
+  - path: patch-tap-collector-pvc.yaml
+  - path: patch-tap-collector-cam-gcode.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: jarvis
+      app.kubernetes.io/managed-by: gpu-rig
+    includeSelectors: false
+
+images:
+  - name: jarvis_tap_collector
+    newName: 192.168.86.120:32000/jarvis_tap_collector
+    newTag: latest
+  - name: jarvis_tap_stream
+    newName: 192.168.86.120:32000/jarvis_tap_stream
+    newTag: latest
+  - name: jarvis_telemetry_bridge
+    newName: 192.168.86.120:32000/jarvis_telemetry_bridge
+    newTag: latest

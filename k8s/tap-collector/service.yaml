@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tap-collector
+  labels:
+    app.kubernetes.io/name: jarvis-tap-collector
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: jarvis-tap-collector
+  ports:
+    - name: http
+      port: 8004
+      targetPort: http

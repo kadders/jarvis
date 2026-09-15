@@ -1,0 +1,19 @@
+# Expose Mosquitto on the LAN via MetalLB so Pi clients can publish.
+# Name: mqtt.jarvis.lan → 192.168.86.7:1883 (see docs/operations/cluster-dns.md).
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto
+  labels:
+    app.kubernetes.io/name: mosquitto
+    app.kubernetes.io/component: mqtt-broker
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: "192.168.86.7"
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: mosquitto
+  ports:
+    - name: mqtt
+      port: 1883
+      targetPort: mqtt

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-telemetry-bridge-config
+  labels:
+    app.kubernetes.io/name: telemetry-bridge
+data:
+  TELEMETRY_BRIDGE_MQTT_HOST: mosquitto
+  TELEMETRY_BRIDGE_MQTT_PORT: "1883"
+  TELEMETRY_BRIDGE_MQTT_TOPICS: "tap/#,cam/#,print/#"
+  TELEMETRY_BRIDGE_KAFKA_BOOTSTRAP: redpanda:9092
+  TELEMETRY_BRIDGE_KAFKA_TOPIC: jarvis.telemetry.tap
+  TELEMETRY_BRIDGE_LOG_DIR: /data/telemetry

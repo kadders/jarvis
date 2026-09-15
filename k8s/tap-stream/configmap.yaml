@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-tap-stream-config
+  labels:
+    app.kubernetes.io/name: jarvis-tap-stream
+data:
+  TAP_STREAM_ENABLED: "true"
+  TAP_STREAM_PORT: "8005"
+  TAP_STREAM_DEVICE_ID: "milo"
+  TAP_STREAM_MJPEG_URL: "http://192.168.86.65:8081/stream"
+  TAP_STREAM_MQTT_HOST: "mosquitto"
+  TAP_STREAM_MQTT_PORT: "1883"
+  TAP_YOUTUBE_RTMP_URL: "rtmp://a.rtmp.youtube.com/live2"
+  # Off for now — MP4-only; flip to "true" without restart once poller is live.
+  TAP_YOUTUBE_ENABLED: "false"
+  TAP_VIDEO_FPS: "15"
+  TAP_VIDEO_BITRATE: "2000k"
+  TAP_VIDEO_ROTATE: "90"
+  TAP_VIDEO_TEST_MAX_WIDTH: "640"
+  TAP_STREAM_OVERLAY_STALE_S: "0.5"
+  TAP_STREAM_CONFIG_POLL_S: "15"
+  # Must be writable by pod uid 1000 (NFS root_squash); avoid image-owned /tmp/tap-stream.
+  TAP_STREAM_WORK_DIR: "/tmp/tap-stream-work"
+  # Same path namespace as Milo TAP_VIDEO_DIR (fridge NFS videos/milo).
+  TAP_STREAM_RECORDINGS_DIR: "/mnt/recordings"

@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tap-collector
+spec:
+  template:
+    spec:
+      containers:
+        - name: tap-collector
+          env:
+            - name: TAP_COLLECTOR_REPLAY_KAFKA_BOOTSTRAP
+              value: redpanda:9092
+            - name: TAP_COLLECTOR_REPLAY_KAFKA_TOPIC
+              value: jarvis.telemetry.tap

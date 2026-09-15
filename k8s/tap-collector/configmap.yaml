@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-tap-collector-config
+  labels:
+    app.kubernetes.io/name: jarvis-tap-collector
+data:
+  TAP_COLLECTOR_HOST: "0.0.0.0"
+  TAP_COLLECTOR_PORT: "8004"
+  TAP_COLLECTOR_MQTT_HOST: "mosquitto"
+  TAP_COLLECTOR_MQTT_PORT: "1883"
+  TAP_COLLECTOR_MQTT_TOPICS: "tap/#,duet/#,cam/#"
+  TAP_COLLECTOR_SESSION_DIR: "/app/cache/tap_sessions"
+  TAP_COLLECTOR_CAM_GCODE_DIR: "/cam-gcode"
+  TAP_COLLECTOR_IDLE_TIMEOUT_S: "30"
+  TAP_COLLECTOR_SPINDLE_FREQ_HZ: "400"
+  TAP_COLLECTOR_MAX_RPM: "24000"
+  TAP_COLLECTOR_MIN_RPM: "9000"
+  TAP_COLLECTOR_LLM_FORWARD: "false"
+  JARVIS_LLM_BASE_URL: "http://llm-api:8000/api/v1"
+  TAP_COLLECTOR_PUBLISH_ANALYSIS: "true"
+  TAP_COLLECTOR_MQTT_EVENT_BUFFER: "5000"
+  TAP_COLLECTOR_MQTT_EVENT_RETENTION_DAYS: "30"
+  TAP_COLLECTOR_MOTION_SAMPLES_MAX: "10000"
+  TAP_COLLECTOR_TELEMETRY_LOG_DIR: "/app/cache/tap_sessions/telemetry"

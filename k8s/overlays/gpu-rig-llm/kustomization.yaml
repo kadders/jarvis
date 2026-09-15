@@ -1,0 +1,40 @@
+# Optional LAN LoadBalancer for llm-api OpenAI-compat (/v1) + events.
+# MetalLB IP pinned to 192.168.86.10 → llm.jarvis.lan
+# (see docs/operations/cluster-dns.md; apply k8s/overlays/gpu-rig-dns/ for LAN names).
+#
+# Also mounts fridge NFS for feedback JSONL (preference learning).
+#
+# Operator:
+#   mkdir -p /media/kad/data/k8s/jarvis-llm/llm-feedback
+#   mkdir -p /media/kad/data/k8s/jarvis-llm/llm-adapters
+#   kubectl apply -k k8s/overlays/gpu-rig-llm/
+#   # LAN: http://llm.jarvis.lan/v1/models  (or http://192.168.86.10/v1/models)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: jarvis-llm
+
+resources:
+  - ../../llm-api
+  - nfs-llm-feedback.yaml
+  - nfs-llm-adapters.yaml
+
+patches:
+  - path: patch-service-lb.yaml
+  - target:
+      kind: Service
+      name: llm-api
+    path: patch-service-ports.yaml
+  - path: patch-deployment-feedback.yaml
+  - path: patch-configmap-openai.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: jarvis
+      app.kubernetes.io/managed-by: gpu-rig
+    includeSelectors: false
+
+images:
+  - name: jarvis_llm_api
+    newName: 192.168.86.120:32000/jarvis_llm_api
+    newTag: latest

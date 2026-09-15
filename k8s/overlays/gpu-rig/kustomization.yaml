@@ -1,0 +1,40 @@
+# gpu-rig / fridge-prime MicroK8s PoC overlay.
+#
+# Applies the core Jarvis LLM stack into namespace jarvis-llm with:
+# - registry rewrite to the control-plane NodePort registry
+# - fridge-prime NFS for Ollama model PVCs (StorageClass nfs-storage)
+#
+# Operator (from a host with kubectl context gpu-rig):
+#   kubectl apply -k k8s/overlays/gpu-rig/
+#
+# Build/push first:
+#   DOCKER_BUILDKIT=1 docker build -t 192.168.86.120:32000/jarvis_llm_api:latest -f Dockerfile .
+#   docker push 192.168.86.120:32000/jarvis_llm_api:latest
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: jarvis-llm
+
+resources:
+  - namespace.yaml
+  - storageclass-nfs.yaml
+  - nfs-fridge-pvs.yaml
+  - ../../redis
+  - ../../ollama
+  - ../../ollama-fast
+  - ../../llm-api
+
+patches:
+  - path: pvc-ollama-nfs.yaml
+  - path: patch-ollama-fast-nfs.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: jarvis
+      app.kubernetes.io/managed-by: gpu-rig
+    includeSelectors: false
+
+images:
+  - name: jarvis_llm_api
+    newName: 192.168.86.120:32000/jarvis_llm_api
+    newTag: latest

@@ -1,0 +1,15 @@
+# Persistent volume for Redis AOF/RDB. Requires a default StorageClass or set
+# spec.storageClassName to match your cluster (e.g. local-path, hostpath).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

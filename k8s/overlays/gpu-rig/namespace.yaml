@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jarvis-llm
+  labels:
+    app.kubernetes.io/part-of: jarvis
+    app.kubernetes.io/name: jarvis-llm

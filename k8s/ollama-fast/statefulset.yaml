@@ -1,0 +1,69 @@
+# "Fast" Ollama tier: StatefulSet so each replica gets a stable PVC
+# (data-ollama-fast-0, data-ollama-fast-1). Default fast model llama3.2:3b
+# fits in 8 GB VRAM. Pascal (e.g. GTX 1070): keep OLLAMA_FLASH_ATTENTION=0.
+# Service selector still matches app.kubernetes.io/name=ollama-fast.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ollama-fast
+  labels:
+    app.kubernetes.io/name: ollama-fast
+    app.kubernetes.io/component: llm-backend
+    jarvis.tier: fast
+spec:
+  serviceName: ollama-fast
+  replicas: 2
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ollama-fast
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ollama-fast
+        app.kubernetes.io/component: llm-backend
+        jarvis.tier: fast
+    spec:
+      runtimeClassName: nvidia
+      nodeSelector:
+        gpu.present: "true"
+      containers:
+        - name: ollama
+          image: ollama/ollama:0.4.7
+          ports:
+            - containerPort: 11434
+              name: http
+          env:
+            - name: OLLAMA_HOST
+              value: "0.0.0.0:11434"
+            - name: OLLAMA_FLASH_ATTENTION
+              value: "0"
+            - name: OLLAMA_KEEP_ALIVE
+              value: "24h"
+            - name: OLLAMA_NUM_PARALLEL
+              value: "2"
+            - name: OLLAMA_MAX_LOADED_MODELS
+              value: "1"
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: "500m"
+              nvidia.com/gpu: 1
+            limits:
+              memory: 10Gi
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: data
+              mountPath: /root/.ollama
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app.kubernetes.io/name: ollama-fast
+          app.kubernetes.io/component: llm-backend
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 15Gi

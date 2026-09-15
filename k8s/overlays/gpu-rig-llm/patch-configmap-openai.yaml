@@ -1,0 +1,22 @@
+# OpenAI-compat auth for LAN LoadBalancer clients (Cursor).
+# Set JARVIS_OPENAI_API_KEY to a non-empty secret shared with Cursor's API key field.
+# Leave empty only for trusted air-gapped LAN experiments.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-llm-api-config
+data:
+  JARVIS_FEEDBACK_DIR: "/var/jarvis/feedback"
+  JARVIS_FEEDBACK_MAX_INJECT: "3"
+  # Operator: replace with a real key (and keep ConfigMap out of public pastebins).
+  JARVIS_OPENAI_API_KEY: "jarvis-lan-openai"
+  # Cloud fallback when Ollama is down (Cursor still uses Jarvis /v1 as primary).
+  # Set JARVIS_FALLBACK_ENABLED=true and JARVIS_FALLBACK_API_KEY to an OpenAI
+  # (or compatible) key. Cannot call Cursor Pro models from the cluster.
+  JARVIS_FALLBACK_ENABLED: "false"
+  JARVIS_FALLBACK_BASE_URL: "https://api.openai.com/v1"
+  JARVIS_FALLBACK_MODEL: "gpt-4o-mini"
+  JARVIS_FALLBACK_TIMEOUT_S: "60"
+  # JARVIS_FALLBACK_API_KEY: ""   # set via sealed secret / manual ConfigMap edit
+  # After DPO/QLoRA export + `ollama create` on big Ollama (see feedback-and-finetune.md).
+  MODEL_NAME_TUNED: "jarvis-tuned:latest"

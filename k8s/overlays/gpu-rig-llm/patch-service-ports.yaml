@@ -1,0 +1,10 @@
+- op: replace
+  path: /spec/ports
+  value:
+    - name: http
+      port: 80
+      targetPort: http
+    # In-cluster clients (UI, ASR, tap-collector) still use :8000
+    - name: http-direct
+      port: 8000
+      targetPort: http

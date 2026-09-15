@@ -1,0 +1,40 @@
+# Static fridge NFS PV for DPO/QLoRA adapters + Ollama Modelfiles.
+# Host path on fridge-prime: /media/kad/data/k8s/jarvis-llm/llm-adapters
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-fridge-llm-adapters
+  labels:
+    app.kubernetes.io/part-of: jarvis
+    jarvis.storage: fridge-nfs
+spec:
+  capacity:
+    storage: 30Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-storage
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.86.221
+    path: /media/kad/data/k8s/jarvis-llm/llm-adapters
+  claimRef:
+    namespace: jarvis-llm
+    name: llm-adapters
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-adapters
+  labels:
+    app.kubernetes.io/name: jarvis-llm-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+  storageClassName: nfs-storage
+  volumeName: nfs-fridge-llm-adapters

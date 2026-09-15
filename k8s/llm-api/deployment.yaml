@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-api
+  labels:
+    app.kubernetes.io/name: jarvis-llm-api
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      # With a single replica, maxUnavailable: 0 keeps capacity during rollouts
+      # (new pod must become Ready before the old one terminates).
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jarvis-llm-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-llm-api
+    spec:
+      containers:
+        - name: api
+          image: jarvis_llm_api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: jarvis-llm-api-config
+          env:
+            - name: MODEL_PATH
+              value: /app/models/llm_model
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: "500m"
+            limits:
+              memory: 8Gi
+          volumeMounts:
+            - name: llm-api-config-volume
+              mountPath: /etc/jarvis/config
+              readOnly: true
+      volumes:
+        - name: llm-api-config-volume
+          configMap:
+            name: jarvis-llm-api-config

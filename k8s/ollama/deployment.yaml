@@ -1,0 +1,64 @@
+# "Big" Ollama: serves the default tier across multiple GPUs on a single pod.
+# Targeted at hosts with 2-3 GPUs allocated to this pod (e.g. 3x GTX 1070).
+# Pin the image tag to a release verified on Pascal (CC 6.1) before bumping.
+# Models live on PVC ollama-data (not emptyDir) so pulls survive restarts.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  labels:
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/component: llm-backend
+    jarvis.tier: big
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ollama
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ollama
+        app.kubernetes.io/component: llm-backend
+        jarvis.tier: big
+    spec:
+      runtimeClassName: nvidia
+      nodeSelector:
+        gpu.present: "true"
+      containers:
+        - name: ollama
+          image: ollama/ollama:0.4.7
+          ports:
+            - containerPort: 11434
+              name: http
+          env:
+            - name: OLLAMA_HOST
+              value: "0.0.0.0:11434"
+            # Pascal-friendly defaults: FlashAttention is unsupported / slow on CC 6.1.
+            - name: OLLAMA_FLASH_ATTENTION
+              value: "0"
+            # Keep model resident; multi-GPU loads are expensive.
+            - name: OLLAMA_KEEP_ALIVE
+              value: "24h"
+            # Pascal has poor fast-FP16; cap parallelism to keep latency predictable.
+            - name: OLLAMA_NUM_PARALLEL
+              value: "1"
+            - name: OLLAMA_MAX_LOADED_MODELS
+              value: "1"
+          resources:
+            requests:
+              memory: 8Gi
+              cpu: "1"
+              nvidia.com/gpu: 3
+            limits:
+              memory: 24Gi
+              nvidia.com/gpu: 3
+          volumeMounts:
+            - name: data
+              mountPath: /root/.ollama
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ollama-data

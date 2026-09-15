@@ -1,0 +1,105 @@
+# Static NFS PVs on fridge-prime (192.168.86.221) for Ollama model data.
+# Export: /media/kad/data/k8s 192.168.86.0/24(rw,sync,no_subtree_check,no_root_squash)
+# Host paths:
+#   /media/kad/data/k8s/jarvis-llm/ollama-big
+#   /media/kad/data/k8s/jarvis-llm/ollama-fast-0
+#   /media/kad/data/k8s/jarvis-llm/ollama-fast-1
+#   /media/kad/data/k8s/jarvis-llm/tap-sessions
+#
+# Do not use MicroK8s StorageClass "nfs" (in-cluster provisioner on gpu-rig).
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-fridge-ollama-big
+  labels:
+    app.kubernetes.io/part-of: jarvis
+    jarvis.storage: fridge-nfs
+spec:
+  capacity:
+    storage: 30Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-storage
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.86.221
+    path: /media/kad/data/k8s/jarvis-llm/ollama-big
+  claimRef:
+    namespace: jarvis-llm
+    name: ollama-data
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-fridge-ollama-fast-0
+  labels:
+    app.kubernetes.io/part-of: jarvis
+    jarvis.storage: fridge-nfs
+spec:
+  capacity:
+    storage: 15Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-storage
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.86.221
+    path: /media/kad/data/k8s/jarvis-llm/ollama-fast-0
+  claimRef:
+    namespace: jarvis-llm
+    name: data-ollama-fast-0
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-fridge-ollama-fast-1
+  labels:
+    app.kubernetes.io/part-of: jarvis
+    jarvis.storage: fridge-nfs
+spec:
+  capacity:
+    storage: 15Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-storage
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.86.221
+    path: /media/kad/data/k8s/jarvis-llm/ollama-fast-1
+  claimRef:
+    namespace: jarvis-llm
+    name: data-ollama-fast-1
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-fridge-tap-sessions
+  labels:
+    app.kubernetes.io/part-of: jarvis
+    jarvis.storage: fridge-nfs
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-storage
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.86.221
+    path: /media/kad/data/k8s/jarvis-llm/tap-sessions
+  claimRef:
+    namespace: jarvis-llm
+    name: tap-collector-sessions

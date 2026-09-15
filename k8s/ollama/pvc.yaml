@@ -1,0 +1,16 @@
+# Persistent volume for big-tier Ollama models (/root/.ollama).
+# Survives pod restarts; pair with a StorageClass (default, hostpath, or static NFS).
+# The gpu-rig overlay binds this claim to fridge-prime NFS via volumeName.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-data
+  labels:
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/component: llm-backend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi

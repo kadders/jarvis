@@ -1,0 +1,14 @@
+# Keeps at least one llm-api pod available during voluntary disruptions when you run
+# replicas >= 2. With replicas: 1, node drains may block until the PDB is removed or
+# minAvailable is lowered — see docs/operations/kubernetes.md.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: llm-api
+  labels:
+    app.kubernetes.io/name: jarvis-llm-api
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jarvis-llm-api

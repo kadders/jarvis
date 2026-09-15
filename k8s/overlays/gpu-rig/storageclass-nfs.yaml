@@ -1,0 +1,11 @@
+# WaitForFirstConsumer + no-provisioner for static NFS PVs (fridge-prime).
+# Used by the gpu-rig overlay; do not confuse with MicroK8s addon SC "nfs".
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-storage
+  labels:
+    app.kubernetes.io/part-of: jarvis
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain

@@ -1,0 +1,16 @@
+# Portable core LLM stack (Redis + Ollama + Ollama-fast + LLM API).
+# Lab NFS / namespace / registry hosts: use --profile gpu-rig (or your overlay).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../redis
+  - ../../ollama
+  - ../../ollama-fast
+  - ../../llm-api
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: jarvis
+      app.kubernetes.io/component: core
+    includeSelectors: false

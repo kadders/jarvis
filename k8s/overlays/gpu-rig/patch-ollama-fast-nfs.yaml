@@ -1,0 +1,19 @@
+# Patch fast-tier volumeClaimTemplates onto fridge NFS StorageClass.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ollama-fast
+spec:
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app.kubernetes.io/name: ollama-fast
+          app.kubernetes.io/component: llm-backend
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: nfs-storage
+        resources:
+          requests:
+            storage: 15Gi

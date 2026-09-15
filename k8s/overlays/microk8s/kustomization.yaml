@@ -1,0 +1,37 @@
+# MicroK8s overlay: rewrites local "jarvis_*" image names to the in-cluster
+# registry at localhost:32000.
+#
+# For the verified multi-node gpu-rig PoC (jarvis-llm namespace, fridge NFS,
+# registry at 192.168.86.120:32000), prefer:
+#     kubectl apply -k k8s/overlays/gpu-rig/
+#
+# Operator usage (after building & pushing images):
+#     kubectl apply -k k8s/overlays/microk8s/
+#
+# To use a different registry (kind, k3d, external), copy this file under
+# k8s/overlays/<your-name>/ and change the `newName` values + image tags.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../redis
+  - ../../ollama
+  - ../../ollama-fast
+  - ../../llm-api
+
+images:
+  - name: jarvis_llm_api
+    newName: localhost:32000/jarvis_llm_api
+    newTag: latest
+  - name: jarvis_asr_service
+    newName: localhost:32000/jarvis_asr_service
+    newTag: latest
+  - name: jarvis_docs
+    newName: localhost:32000/jarvis_docs
+    newTag: latest
+  - name: jarvis_tts
+    newName: localhost:32000/jarvis_tts
+    newTag: latest
+  - name: jarvis_ui
+    newName: localhost:32000/jarvis_ui
+    newTag: latest

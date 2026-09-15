@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          env:
+            - name: JARVIS_FEEDBACK_DIR
+              value: /var/jarvis/feedback
+          volumeMounts:
+            - name: llm-feedback
+              mountPath: /var/jarvis/feedback
+      volumes:
+        - name: llm-feedback
+          persistentVolumeClaim:
+            claimName: llm-feedback

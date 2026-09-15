@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui
+  labels:
+    app.kubernetes.io/name: jarvis-ui
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: jarvis-ui
+  ports:
+    - name: http
+      port: 8003
+      targetPort: http

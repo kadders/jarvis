@@ -1,0 +1,12 @@
+# Portable chat UI. Image rewritten by ./deploy.sh from REGISTRY / IMAGE_TAG.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../ui
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: jarvis
+      app.kubernetes.io/component: ui
+    includeSelectors: false

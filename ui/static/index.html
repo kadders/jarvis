@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jarvis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <main class="shell" id="shell">
+    <header class="masthead">
+      <div class="brand-block">
+        <p class="brand">Jarvis</p>
+        <p class="tagline" id="tagline">Talk to your local models</p>
+      </div>
+      <div class="controls">
+        <nav class="view-nav" aria-label="Views">
+          <button type="button" class="nav-btn is-active" data-view="chat" id="nav-chat">Chat</button>
+          <button type="button" class="nav-btn" data-view="learning" id="nav-learning">Learning</button>
+        </nav>
+        <div class="tier" role="group" aria-label="Model tier" id="tier-group">
+          <button type="button" class="tier-btn is-active" data-tier="default" id="tier-big">Big</button>
+          <button type="button" class="tier-btn" data-tier="fast" id="tier-fast">Fast</button>
+        </div>
+        <div class="status" id="conn-status" data-state="checking" title="API connection">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-label">Checking</span>
+        </div>
+        <button type="button" class="ghost-btn" id="clear-btn">Clear</button>
+        <button type="button" class="ghost-btn hidden" id="learn-refresh-btn">Refresh</button>
+      </div>
+    </header>
+
+    <div class="view" id="view-chat" data-view-panel="chat">
+      <section class="thread" id="thread" aria-live="polite"></section>
+      <form class="composer" id="composer">
+        <label class="sr-only" for="prompt">Message</label>
+        <textarea
+          id="prompt"
+          name="prompt"
+          rows="1"
+          placeholder="Ask Jarvis…"
+          autocomplete="off"
+          required
+        ></textarea>
+        <button type="submit" class="send-btn" id="send-btn">Send</button>
+      </form>
+    </div>
+
+    <div class="view hidden" id="view-learning" data-view-panel="learning">
+      <section class="learn-summary" id="learn-summary" aria-live="polite"></section>
+      <section class="learn-days" id="learn-days"></section>
+      <div class="learn-toolbar">
+        <label class="learn-field">
+          <span>Slice</span>
+          <select id="learn-slice">
+            <option value="all">All</option>
+            <option value="ask_local">Ask-local</option>
+            <option value="agent_outcome">Agent outcomes</option>
+            <option value="mcp">MCP</option>
+            <option value="ui">UI</option>
+            <option value="python_jarvis">Python</option>
+            <option value="arduino_wand">Arduino</option>
+            <option value="rrf_nxt">RRF/nxt</option>
+          </select>
+        </label>
+        <label class="learn-field">
+          <span>Domain</span>
+          <select id="learn-domain">
+            <option value="">Any</option>
+            <option value="python_jarvis">python_jarvis</option>
+            <option value="arduino_wand">arduino_wand</option>
+            <option value="rrf_nxt">rrf_nxt</option>
+            <option value="general">general</option>
+          </select>
+        </label>
+        <label class="learn-field">
+          <span>Rating</span>
+          <select id="learn-rating">
+            <option value="-1" selected>Incorrect</option>
+            <option value="1">Correct</option>
+            <option value="0">Neutral</option>
+            <option value="">Any</option>
+          </select>
+        </label>
+        <label class="learn-field">
+          <span>Source</span>
+          <select id="learn-source">
+            <option value="">Any</option>
+            <option value="mcp">mcp</option>
+            <option value="ui">ui</option>
+            <option value="cursor">cursor</option>
+            <option value="api">api</option>
+          </select>
+        </label>
+        <label class="learn-field grow">
+          <span>Search</span>
+          <input type="search" id="learn-q" placeholder="Prompt / response…" autocomplete="off" />
+        </label>
+      </div>
+      <div class="learn-split">
+        <ul class="learn-list" id="learn-list"></ul>
+        <article class="learn-detail" id="learn-detail">
+          <p class="learn-detail-empty">Select a response to inspect prompt, answer, and correction.</p>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

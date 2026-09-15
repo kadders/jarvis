@@ -1,0 +1,37 @@
+# Optional chat UI on gpu-rig (namespace jarvis-llm).
+# Requires core stack already applied (llm-api Service).
+# MetalLB IP pinned to 192.168.86.6 → ui.jarvis.lan / chat.jarvis.lan
+# (see docs/operations/cluster-dns.md; apply k8s/overlays/gpu-rig-dns/ for LAN names).
+#
+# Operator:
+#   docker build -t 192.168.86.120:32000/jarvis_ui:learning-1 -f ui/Dockerfile ./ui
+#   docker push 192.168.86.120:32000/jarvis_ui:learning-1
+#   kubectl apply -k k8s/overlays/gpu-rig-ui/
+#   # LAN: http://ui.jarvis.lan  (or http://192.168.86.6)
+#   kubectl -n jarvis-llm port-forward svc/ui 8003:8003
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: jarvis-llm
+
+resources:
+  - ../../ui
+
+patches:
+  - path: patch-service-lb.yaml
+  - target:
+      kind: Service
+      name: ui
+    path: patch-service-ports.yaml
+
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: jarvis
+      app.kubernetes.io/managed-by: gpu-rig
+    includeSelectors: false
+
+images:
+  - name: jarvis_ui
+    newName: 192.168.86.120:32000/jarvis_ui
+    newTag: learning-1

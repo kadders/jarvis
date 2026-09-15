@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui
+  labels:
+    app.kubernetes.io/name: jarvis-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jarvis-ui
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarvis-ui
+    spec:
+      containers:
+        - name: ui
+          image: jarvis_ui:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8003
+              name: http
+          envFrom:
+            - configMapRef:
+                name: jarvis-ui-config
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: "50m"
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: ui-config-volume
+              mountPath: /etc/jarvis/config
+              readOnly: true
+      volumes:
+        - name: ui-config-volume
+          configMap:
+            name: jarvis-ui-config

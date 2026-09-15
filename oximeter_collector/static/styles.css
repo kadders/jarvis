@@ -1,0 +1,126 @@
+:root {
+  --bg: #0c1014;
+  --panel: #141a22;
+  --text: #e8eef5;
+  --muted: #8b98a8;
+  --accent: #3dd68c;
+  --border: #243040;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.lede { color: var(--muted); margin: 0.25rem 0 0; font-size: 0.9rem; }
+.pill {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 0.85rem;
+}
+.top-actions { display: flex; gap: 0.5rem; align-items: center; }
+.link { text-decoration: none; color: var(--text); font-size: 0.85rem; }
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.btn-row { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+button.danger { color: #f88; border-color: #633; }
+.pill[data-state="ok"] { color: var(--accent); }
+.pill[data-state="err"] { color: #f88; }
+.pill[data-state="off"] { color: var(--muted); }
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: calc(100vh - 80px);
+}
+.rail {
+  border-right: 1px solid var(--border);
+  padding: 1rem;
+  overflow: auto;
+}
+.rail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1rem 0 0.5rem;
+}
+.rail-head h2 { margin: 0; font-size: 0.95rem; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.list li:hover, .list li.active { background: var(--panel); }
+.detail { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.sub { color: var(--muted); }
+.chart { min-height: 220px; margin: 0.5rem 0; }
+.stats { font-family: monospace; font-size: 0.85rem; color: var(--muted); }
+form label {
+  display: block;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+form input, form select {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.4rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px;
+}
+button {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+}
+button.primary {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+.ghost { background: transparent; }
+.hint { color: var(--muted); font-size: 0.85rem; }
+pre {
+  background: var(--bg);
+  padding: 0.75rem;
+  overflow: auto;
+  font-size: 0.8rem;
+  border-radius: 4px;
+}
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+}
+.toast.hidden { display: none; }

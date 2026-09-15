@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Oximeter Telemetry</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.min.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Oximeter</h1>
+      <p class="lede">Live HR / SpO2 · sessions · config push via MQTT or HTTP</p>
+    </div>
+    <div class="top-actions">
+      <a class="ghost link" id="mqtt-stream-link" href="/api/v1/mqtt/events?limit=50" target="_blank" rel="noopener">MQTT stream</a>
+      <span class="pill" id="ws-pill">WS …</span>
+      <span class="pill" id="health-pill">…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="rail">
+      <div class="rail-head">
+        <h2>Devices</h2>
+        <button type="button" class="ghost" id="refresh-devices">Refresh</button>
+      </div>
+      <ul class="list" id="device-list"></ul>
+
+      <div class="rail-head">
+        <h2>Sessions</h2>
+        <button type="button" class="ghost" id="refresh-sessions">Refresh</button>
+      </div>
+      <ul class="list" id="session-list"></ul>
+    </aside>
+
+    <section class="detail">
+      <div class="panel" id="live-panel">
+        <h2 id="device-title">Select a device</h2>
+        <p class="sub" id="device-sub"></p>
+        <div id="chart-live" class="chart"></div>
+        <div class="stats" id="live-stats"></div>
+      </div>
+
+      <div class="panel" id="config-panel">
+        <div class="panel-head">
+          <h3>Push configuration</h3>
+          <div class="btn-row">
+            <button type="button" class="ghost" id="load-template">Load template</button>
+            <button type="button" class="ghost" id="fetch-config">Fetch from device</button>
+            <button type="button" class="ghost danger" id="reboot-device">Reboot</button>
+          </div>
+        </div>
+        <p class="hint">MQTT <code>oximeter/{id}/cmd/config</code> or HTTP POST to device IP when on LAN.</p>
+        <form id="config-form">
+          <label>WiFi SSID <input name="wifi_ssid" id="wifi_ssid" /></label>
+          <label>WiFi password <input name="wifi_pass" id="wifi_pass" type="password" /></label>
+          <label>MQTT host <input name="mqtt_host" id="mqtt_host" /></label>
+          <label>MQTT port <input name="mqtt_port" id="mqtt_port" type="number" value="1883" /></label>
+          <label>MQTT prefix <input name="mqtt_prefix" id="mqtt_prefix" /></label>
+          <label><input type="checkbox" id="mqtt_enabled" checked /> MQTT enabled</label>
+          <label>BLE name <input name="ble_name" id="ble_name" /></label>
+          <label>LED current (hex) <input name="led_current" id="led_current" value="24" /></label>
+          <label>Push via
+            <select id="push_via">
+              <option value="mqtt">MQTT</option>
+              <option value="http">HTTP (device IP)</option>
+              <option value="both">Both</option>
+            </select>
+          </label>
+          <button type="submit" class="primary">Push config</button>
+        </form>
+        <pre id="config-result"></pre>
+      </div>
+
+      <div class="panel" id="session-panel" hidden>
+        <div class="panel-head">
+          <h3 id="session-title">Session</h3>
+          <a class="ghost link" id="export-csv" href="#">Export CSV</a>
+        </div>
+        <div id="chart-session" class="chart"></div>
+        <div class="stats" id="session-analytics"></div>
+        <pre id="session-summary"></pre>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.iife.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

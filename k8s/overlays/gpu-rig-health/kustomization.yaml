@@ -1,0 +1,43 @@
+# Health telemetry stack (namespace health) — oximeter collector + session store.
+# Independent of jarvis-llm; subscribes to Mosquitto in jarvis-llm via cluster DNS.
+# MetalLB IP pinned: oximeter 192.168.86.12 → oximeter.jarvis.lan
+#
+# Operator:
+#   sudo mkdir -p /media/kad/data/k8s/health/oximeter-data   # on fridge-prime
+#   docker build -t 192.168.86.120:32000/jarvis_oximeter_collector:latest -f oximeter_collector/Dockerfile ./oximeter_collector
+#   docker push 192.168.86.120:32000/jarvis_oximeter_collector:latest
+#   kubectl apply -k k8s/overlays/gpu-rig-health/
+#
+# UI: http://oximeter.jarvis.lan/ui/
+#
+# If oximeter was ever deployed in jarvis-llm, run:
+#   bash k8s/overlays/gpu-rig-health/cleanup-jarvis-llm-oximeter.sh
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: health
+
+resources:
+  - namespace.yaml
+  - ../../oximeter-collector
+  - nfs-oximeter-data.yaml
+
+patches:
+  - path: patch-oximeter-collector-lb.yaml
+  - path: patch-oximeter-collector-pvc.yaml
+  - path: patch-oximeter-collector-config.yaml
+  - target:
+      kind: Service
+      name: oximeter-collector
+    path: patch-oximeter-collector-ports.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: health
+      app.kubernetes.io/managed-by: gpu-rig
+    includeSelectors: false
+
+images:
+  - name: jarvis_oximeter_collector
+    newName: 192.168.86.120:32000/jarvis_oximeter_collector
+    newTag: latest

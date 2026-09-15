@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-oximeter-collector-config
+data:
+  # Cross-namespace: Mosquitto stays in jarvis-llm telemetry stack.
+  OXI_COLLECTOR_MQTT_HOST: "mosquitto.jarvis-llm.svc.cluster.local"
+  JARVIS_LLM_BASE_URL: "http://llm-api.jarvis-llm.svc.cluster.local:8000/api/v1"

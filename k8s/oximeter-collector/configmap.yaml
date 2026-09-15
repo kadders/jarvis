@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-oximeter-collector-config
+  labels:
+    app.kubernetes.io/name: jarvis-oximeter-collector
+data:
+  OXI_COLLECTOR_HOST: "0.0.0.0"
+  OXI_COLLECTOR_PORT: "8005"
+  OXI_COLLECTOR_MQTT_HOST: "mosquitto"
+  OXI_COLLECTOR_MQTT_PORT: "1883"
+  OXI_COLLECTOR_MQTT_TOPICS: "oximeter/#"
+  OXI_COLLECTOR_STORE_DIR: "/app/cache/oximeter"
+  OXI_COLLECTOR_IDLE_TIMEOUT_S: "30"
+  OXI_COLLECTOR_MQTT_EVENT_BUFFER: "5000"
+  OXI_COLLECTOR_MQTT_EVENT_RETENTION_DAYS: "30"
+  OXI_COLLECTOR_DEFAULT_MQTT_HOST: "mqtt.jarvis.lan"
+  OXI_COLLECTOR_DEFAULT_MQTT_ENABLED: "true"
+  OXI_COLLECTOR_LLM_FORWARD: "false"
+  JARVIS_LLM_BASE_URL: "http://llm-api:8000/api/v1"
+  # Set via secret overlay for lab Wi-Fi provisioning template:
+  OXI_COLLECTOR_DEFAULT_WIFI_SSID: ""
+  OXI_COLLECTOR_DEFAULT_WIFI_PASS: ""

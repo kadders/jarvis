@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: health
+  labels:
+    app.kubernetes.io/name: health
+    app.kubernetes.io/part-of: health
+    app.kubernetes.io/managed-by: gpu-rig

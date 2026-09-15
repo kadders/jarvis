@@ -1,0 +1,39 @@
+# NFS-backed store for oximeter devices, sessions, and MQTT event log.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-health-oximeter-data
+  labels:
+    app.kubernetes.io/part-of: health
+    jarvis.storage: fridge-nfs
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-storage
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.86.221
+    path: /media/kad/data/k8s/health/oximeter-data
+  claimRef:
+    namespace: health
+    name: oximeter-collector-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oximeter-collector-data
+  labels:
+    app.kubernetes.io/name: jarvis-oximeter-collector
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: nfs-storage
+  volumeName: nfs-health-oximeter-data

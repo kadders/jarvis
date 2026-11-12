@@ -159,11 +159,11 @@ async def list_feedback(
     ),
     slice: Optional[str] = Query(
         None,
-        pattern="^(all|ask_local|agent_outcome|mcp|ui|python_jarvis|arduino_wand|rrf_nxt)$",
+        pattern="^(all|ask_local|agent_outcome|mcp|ui|python_jarvis|arduino_wand|rrf_nxt|cad|mentra)$",
     ),
     domain: Optional[str] = Query(
         None,
-        pattern="^(python_jarvis|arduino_wand|rrf_nxt|general)$",
+        pattern="^(python_jarvis|arduino_wand|rrf_nxt|cad|mentra|general)$",
     ),
     q: Optional[str] = Query(None, description="Substring search prompt/response"),
     limit: int = Query(50, ge=1, le=200),

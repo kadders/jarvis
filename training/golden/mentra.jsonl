@@ -1,0 +1,30 @@
+{"prompt": "Should a Mentra App miniapp use @mentra/miniapp or @mentra/bluetooth-sdk?", "expect_contains": ["@mentra/miniapp"]}
+{"prompt": "Is @mentra/sdk AppServer still the recommended Mentra app path?", "expect_contains": ["legacy"]}
+{"prompt": "Where does session.display.render belong in a Mentra miniapp?", "expect_contains": ["background"]}
+{"prompt": "When is session.capabilities populated?", "expect_contains": ["ready"]}
+{"prompt": "What does session.display.render(elements) do to the HUD frame?", "expect_contains": ["replace"]}
+{"prompt": "How do you clear the Mentra miniapp HUD?", "expect_contains": ["render([])"]}
+{"prompt": "Recommended design canvas size for Mentra HUD layouts?", "expect_contains": ["500"]}
+{"prompt": "How do I scaffold a Mentra miniapp with Bun?", "expect_contains": ["create-mentra-miniapp"]}
+{"prompt": "Can I publish Miniapp SDK builds to the Mentra Miniapp Store on MentraOS 3.0?", "expect_contains": ["No"]}
+{"prompt": "Does Expo Go support @mentra/bluetooth-sdk?", "expect_contains": ["No"]}
+{"prompt": "Bluetooth SDK 3.3.0 — what Mentra Live software version is required?", "expect_contains": ["3.3.0"]}
+{"prompt": "React Native: which DeviceModels value scans for Mentra Live?", "expect_contains": ["MentraLive"]}
+{"prompt": "Android Maven package for Mentra Bluetooth SDK?", "expect_contains": ["bluetooth-sdk"]}
+{"prompt": "What must the miniapp UI call on boot after mounting?", "expect_contains": ["ready"]}
+{"prompt": "Why return the setup promise from registerMiniapp?", "expect_contains": ["splash"]}
+{"prompt": "Can the miniapp background use Node fs?", "expect_contains": ["No"]}
+{"prompt": "How do miniapp UI and background talk?", "expect_contains": ["channel"]}
+{"prompt": "What feedback metadata.domain should Mentra SDK work use?", "expect_contains": ["mentra"]}
+{"prompt": "Where is the Mentra documentation index for AI tools?", "expect_contains": ["llms.txt"]}
+{"prompt": "Own React Native app talking to Mentra Live over BLE — which SDK?", "expect_contains": ["bluetooth"]}
+{"prompt": "Declare miniapp hardware DISPLAY requirement in which file?", "expect_contains": ["miniapp.json"]}
+{"prompt": "session.ui.send while the WebView is closed — what happens?", "expect_contains": ["drop"]}
+{"prompt": "For elapsed time in miniapp background, use Date.now() or performance.now()?", "expect_contains": ["Date.now"]}
+{"prompt": "Should normal app developers call Mentra OEM engine.* APIs?", "expect_contains": ["No"]}
+{"prompt": "Android USB option when phone and laptop Wi-Fi differ for miniapp dev?", "expect_contains": ["usb"]}
+{"prompt": "Import Mentra Bluetooth React hooks from which path?", "expect_contains": ["react"]}
+{"prompt": "Minimum Android API level for Mentra Bluetooth SDK?", "expect_contains": ["28"]}
+{"prompt": "After a miniapp background crash, are in-flight UI requests auto-replayed?", "expect_contains": ["No"]}
+{"prompt": "Package that provides mentra-miniapp CLI dev/pack/release?", "expect_contains": ["miniapp-cli"]}
+{"prompt": "Does BLE connected alone prove Mentra Live software matches the Bluetooth SDK?", "expect_contains": ["No"]}

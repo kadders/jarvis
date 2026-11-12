@@ -1,0 +1,30 @@
+{"prompt": "Fusion MCP timed out on create_box. What should I do next?", "expect_contains": ["get_scene_info"]}
+{"prompt": "Should Fusion CAD mutations use parallel_tool_calls true? Prefer the shop rule for Fusion MCP.", "expect_contains": ["false"]}
+{"prompt": "How many Fusion mutations are allowed per tool call in this shop?", "expect_contains": ["one"]}
+{"prompt": "Verify Fusion before editing: which health tools should I call first?", "expect_contains": ["ping"]}
+{"prompt": "An 8B model is drowned by ~90 Fusion schemas — what should we use instead?", "expect_contains": ["prompt"]}
+{"prompt": "May the assistant invent a Fusion MCP tool name that is not in the tool list?", "expect_contains": ["No"]}
+{"prompt": "RRF Tn maps one-to-one to which Fusion tool library field?", "expect_contains": ["post-process"]}
+{"prompt": "What is the permanent Fusion tool identity in tap-collector (not the RRF slot)?", "expect_contains": ["GUID"]}
+{"prompt": "May the LLM invent chipload for 6061 aluminum when Fusion presets are missing?", "expect_contains": ["Never"]}
+{"prompt": "If Fusion feed is missing, what should cutting_force be?", "expect_contains": ["null"]}
+{"prompt": "How is effective chipload fz_eff computed from feed, teeth, and RPM?", "expect_contains": ["RPM"]}
+{"prompt": "Where does feed_mm_min on a tap segment come from?", "expect_contains": ["Fusion"]}
+{"prompt": "What is DOC_MAX_MM for the tap-collector cutting-force envelope?", "expect_contains": ["4.5"]}
+{"prompt": "May analytics push modified G-code programs to the machine?", "expect_contains": ["Never"]}
+{"prompt": "How does tap-collector resolve a CAM job file on the fridge share?", "expect_contains": ["basename"]}
+{"prompt": "Is full CAM path simulation available in tap-collector today?", "expect_contains": ["No"]}
+{"prompt": "What feedback metadata.domain should Fusion Design trajectories use?", "expect_contains": ["cad"]}
+{"prompt": "When should you prefer adaptive clearing vs contour in Fusion Manufacture?", "expect_contains": ["bulk"]}
+{"prompt": "Should Jarvis invent a full pocket G-code program in chat instead of Fusion Manufacture?", "expect_contains": ["No"]}
+{"prompt": "After changing feeds in Fusion Manufacture, what else must you update for the shop?", "expect_contains": ["tap-collector"]}
+{"prompt": "Default shop axis assumption for Milo/nxt coaching unless rotary is specified?", "expect_contains": ["3-axis"]}
+{"prompt": "Tap-collector reports avoid_rpm bands. Should coaching ignore them?", "expect_contains": ["Prefer"]}
+{"prompt": "Does the Fusion TCP bridge (port 9876) use authentication?", "expect_contains": ["no"]}
+{"prompt": "What approximate WoC sweep mm values does cutting_force use?", "expect_contains": ["1.2"]}
+{"prompt": "On high vibration, should Jarvis automatically rewrite Fusion adaptive feeds and re-post?", "expect_contains": ["No"]}
+{"prompt": "In Fusion Manufacture, what must you define before generating toolpaths?", "expect_contains": ["setup"]}
+{"prompt": "Manufacture WCS should align with what nxt machine workflow?", "expect_contains": ["probing"]}
+{"prompt": "Inch chipload imported into a metric catalog: what must happen?", "expect_contains": ["Convert"]}
+{"prompt": "Default tool library import when two GUIDs share post-process.number?", "expect_contains": ["removed"]}
+{"prompt": "Default material for tap-collector cutting-force coefficients?", "expect_contains": ["6061"]}

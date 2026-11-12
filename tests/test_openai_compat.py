@@ -123,3 +123,99 @@ def test_feedback_from_event(client):
         json={"event_id": eid, "rating": 1, "source": "mcp"},
     )
     assert fb.status_code == 200
+
+
+_PING_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "ping",
+        "description": "Health check",
+        "parameters": {"type": "object", "properties": {}},
+    },
+}
+
+
+def test_chat_completions_tools_mock(client):
+    r = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "mock_model",
+            "messages": [{"role": "user", "content": "ping Fusion"}],
+            "tools": [_PING_TOOL],
+            "stream": False,
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    choice = body["choices"][0]
+    assert choice["finish_reason"] == "tool_calls"
+    msg = choice["message"]
+    assert msg.get("content") in (None, "")
+    assert msg["tool_calls"]
+    assert msg["tool_calls"][0]["function"]["name"] == "ping"
+    assert msg["tool_calls"][0]["id"]
+
+
+def test_chat_completions_tool_followup(client):
+    """Assistant tool_calls + role=tool messages are accepted (no 422)."""
+    r = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "mock_model",
+            "messages": [
+                {"role": "user", "content": "ping Fusion"},
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_abc",
+                            "type": "function",
+                            "function": {"name": "ping", "arguments": "{}"},
+                        }
+                    ],
+                },
+                {
+                    "role": "tool",
+                    "tool_call_id": "call_abc",
+                    "content": '{"ok": true, "status": "pong"}',
+                },
+            ],
+            "tools": [_PING_TOOL],
+            "stream": False,
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    # Mock still emits a tool call when tools are present.
+    assert body["choices"][0]["finish_reason"] == "tool_calls"
+
+
+def test_chat_completions_tools_stream(client):
+    with client.stream(
+        "POST",
+        "/v1/chat/completions",
+        json={
+            "model": "mock_model",
+            "messages": [{"role": "user", "content": "call ping"}],
+            "tools": [_PING_TOOL],
+            "stream": True,
+        },
+    ) as r:
+        assert r.status_code == 200
+        text = "".join(r.iter_text())
+    assert "[DONE]" in text
+    lines = [ln for ln in text.splitlines() if ln.startswith("data: ") and "[DONE]" not in ln]
+    payloads = [json.loads(ln[len("data: ") :]) for ln in lines]
+    saw_tool_delta = False
+    saw_tool_finish = False
+    for chunk in payloads:
+        choice = chunk["choices"][0]
+        delta = choice.get("delta") or {}
+        if delta.get("tool_calls"):
+            saw_tool_delta = True
+            assert delta["tool_calls"][0]["function"]["name"] == "ping"
+        if choice.get("finish_reason") == "tool_calls":
+            saw_tool_finish = True
+    assert saw_tool_delta
+    assert saw_tool_finish

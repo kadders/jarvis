@@ -13,6 +13,8 @@ DOMAIN_TAGS = {
     "python_public": "python_public",
     "rrf_nxt": "rrf_nxt",
     "arduino_wand": "arduino_wand",
+    "cad": "cad",
+    "mentra": "mentra",
 }
 
 
@@ -65,7 +67,15 @@ def merge_files(
             file=sys.stderr,
         )
 
-    for domain in ("rrf_nxt", "python_jarvis", "python_public", "arduino_wand", "general"):
+    for domain in (
+        "rrf_nxt",
+        "python_jarvis",
+        "python_public",
+        "arduino_wand",
+        "cad",
+        "mentra",
+        "general",
+    ):
         for row in buckets.get(domain, []):
             key = (row["prompt"], row["chosen"], row["rejected"])
             if key in seen:

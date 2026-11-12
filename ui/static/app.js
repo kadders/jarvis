@@ -228,6 +228,8 @@
       ["python_jarvis", "Python"],
       ["arduino_wand", "Arduino"],
       ["rrf_nxt", "RRF/nxt"],
+      ["cad", "CAD/CAM"],
+      ["mentra", "Mentra"],
     ];
     learnSummary.innerHTML = order
       .map(([key, label]) => {

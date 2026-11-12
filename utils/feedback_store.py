@@ -1,4 +1,5 @@
 """Append-only feedback / preference store for LLM learning."""
+
 from __future__ import annotations
 
 import json
@@ -38,7 +39,9 @@ def is_outcome_record(rec: Dict[str, Any]) -> bool:
     return meta.get("kind") == "outcome"
 
 
-VALID_DOMAINS = frozenset({"python_jarvis", "arduino_wand", "rrf_nxt", "general"})
+VALID_DOMAINS = frozenset(
+    {"python_jarvis", "arduino_wand", "rrf_nxt", "cad", "mentra", "general"}
+)
 
 
 def record_domain(rec: Dict[str, Any]) -> Optional[str]:
@@ -52,8 +55,45 @@ def record_domain(rec: Dict[str, Any]) -> Optional[str]:
 def infer_domain_from_text(text: str) -> Optional[str]:
     """Heuristic domain tag from prompt/response/call text."""
     t = text.lower()
-    if any(k in t for k in (".cpp", "esp32", "platformio", "arduino", "fastled", "wifimode")):
+    if any(
+        k in t
+        for k in (".cpp", "esp32", "platformio", "arduino", "fastled", "wifimode")
+    ):
         return "arduino_wand"
+    if any(
+        k in t
+        for k in (
+            "mentra",
+            "mentraglass",
+            "@mentra/miniapp",
+            "@mentra/bluetooth-sdk",
+            "registerminiapp",
+            "devicemodels.mentralive",
+            "mentra live",
+            "mentraos",
+            "session.display.render",
+            "create-mentra-miniapp",
+        )
+    ):
+        return "mentra"
+    if any(
+        k in t
+        for k in (
+            "fusion 360",
+            "fusion360",
+            "create_box",
+            "get_scene_info",
+            "chipload",
+            "feed_mm_min",
+            "post-process.number",
+            "manufacture",
+            "toolpath",
+            "adaptive clearing",
+            "cutting_force",
+            "fusion mcp",
+        )
+    ):
+        return "cad"
     if any(
         k in t
         for k in (

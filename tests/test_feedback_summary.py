@@ -1,4 +1,5 @@
 """Feedback summary / list APIs for the Learning UI."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -115,3 +116,37 @@ def test_domain_slice_and_tags(tmp_path):
     assert listed["n_total"] == 1
     summary = store.summary()
     assert "arduino_wand" in summary["slices"]
+
+
+def test_cad_domain_slice(tmp_path):
+    store = FeedbackStore(str(tmp_path / "fb.jsonl"))
+    rec = store.append(
+        {
+            "rating": 1,
+            "prompt": "Fusion create_box after TIMEOUT",
+            "response": "call get_scene_info first",
+            "source": "mcp",
+            "metadata": {"kind": "outcome", "domain": "cad"},
+        }
+    )
+    assert "cad" in slice_tags_for(rec)
+    listed = store.list_records(slice_name="cad")
+    assert listed["n_total"] == 1
+    assert "cad" in store.summary()["slices"]
+
+
+def test_mentra_domain_slice(tmp_path):
+    store = FeedbackStore(str(tmp_path / "fb.jsonl"))
+    rec = store.append(
+        {
+            "rating": 1,
+            "prompt": "Use @mentra/miniapp registerMiniapp",
+            "response": "background owns session.display.render",
+            "source": "mcp",
+            "metadata": {"kind": "outcome", "domain": "mentra"},
+        }
+    )
+    assert "mentra" in slice_tags_for(rec)
+    listed = store.list_records(slice_name="mentra")
+    assert listed["n_total"] == 1
+    assert "mentra" in store.summary()["slices"]

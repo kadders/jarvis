@@ -28,7 +28,7 @@ Store path: **`JARVIS_FEEDBACK_DIR`**/`feedback.jsonl` (gpu-rig-llm: fridge NFS 
 
 | Method | Path | Description |
 | ------ | ---- | ----------- |
-| `GET` | `/api/v1/feedback/summary` | Aggregates: `by_rating`, `by_source`, `by_kind`, **slices** (`all` / `ask_local` / `agent_outcome` / `mcp` / `ui` / `python_jarvis` / `arduino_wand` / `rrf_nxt`) with `{ n, pos, neg, zero, judged, accuracy }`, `by_day`, `exportable_pairs`, `with_correction`. Query: **`day_limit`** (default 30). |
+| `GET` | `/api/v1/feedback/summary` | Aggregates: `by_rating`, `by_source`, `by_kind`, **slices** (`all` / `ask_local` / `agent_outcome` / `mcp` / `ui` / `python_jarvis` / `arduino_wand` / `rrf_nxt` / `cad` / `mentra`) with `{ n, pos, neg, zero, judged, accuracy }`, `by_day`, `exportable_pairs`, `with_correction`. Query: **`day_limit`** (default 30). |
 | `GET` | `/api/v1/feedback` | Filtered list. Query: `rating`, `source`, `kind` (`outcome`\|`other`), `slice`, `domain`, `q`, `limit` (≤200), `offset`, `order`. Items include previews + `slice_tags`. |
 | `GET` | `/api/v1/feedback/{feedback_id}` | Full record + `slice_tags` (404 if missing). |
 
@@ -144,6 +144,50 @@ python -m training.build_arduino_dataset \
 
 Golden eval: **`training/golden/arduino_wand.jsonl`**.
 
+## Domain dataset (CAD / CAM)
+
+Curated preference pairs for Fusion Design MCP tool-use, shop math (chipload / GUID↔`post-process.number`↔RRF `Tn`), post hygiene, and Manufacture coaching boundaries. Seeded from **`training/datasets/cad/STYLE.md`**, curated Q&A, [Fusion 360 MCP](fusion360-mcp.md), [tap-collector](../services/tap-collector.md), and `tap_collector/models/cutting_force.py`. Pair kinds include **`fusion_tool_use`**, **`fusion_timeout`**, **`scene_recovery`**, **`tool_map`**, **`chipload`**, **`cutting_force`**, **`cam_gcode_resolve`**, **`post_hygiene`**, **`manufacture_setup`**, **`toolpath`**, **`cad_style`**.
+
+```bash
+python -m training.build_cad_dataset \
+  --jarvis-root . \
+  --out-dir training/datasets/cad
+```
+
+Golden eval: **`training/golden/cad.jsonl`**.
+
+```bash
+python -m training.eval_golden \
+  --cases training/golden/cad.jsonl \
+  --base-url http://llm.jarvis.lan/v1 \
+  --model llama31-8b \
+  --api-key jarvis-lan-openai
+```
+
+Log Fusion / CAM agent outcomes with **`metadata.domain: "cad"`** (`jarvis_log_outcome` / feedback).
+
+## Domain dataset (MentraOS)
+
+Curated preference pairs for Mentra Miniapp SDK (`@mentra/miniapp`) and Mentra Bluetooth SDK coaching from [docs.mentraglass.com](https://docs.mentraglass.com/) (`llms.txt` index). Seeded from **`training/datasets/mentra/STYLE.md`** and curated Q&A. Pair kinds include **`sdk_choice`**, **`legacy_cloud`**, **`two_layer`**, **`startup`**, **`session`**, **`display`**, **`scaffold`**, **`cli`**, **`distribution`**, **`bluetooth`**, **`channels`**, **`mentra_style`**. OEM engine APIs are out of scope.
+
+```bash
+python -m training.build_mentra_dataset \
+  --jarvis-root . \
+  --out-dir training/datasets/mentra
+```
+
+Golden eval: **`training/golden/mentra.jsonl`**.
+
+```bash
+python -m training.eval_golden \
+  --cases training/golden/mentra.jsonl \
+  --base-url http://llm.jarvis.lan/v1 \
+  --model llama31-8b \
+  --api-key jarvis-lan-openai
+```
+
+Log Mentra agent outcomes with **`metadata.domain: "mentra"`** (`jarvis_log_outcome` / feedback).
+
 ## Merge corpora before train
 
 ```bash
@@ -153,10 +197,12 @@ python -m training.merge_preferences \
   training/datasets/rrf_nxt/preferences.jsonl \
   training/datasets/python_jarvis/preferences.jsonl \
   training/datasets/python_public/preferences.jsonl \
-  training/datasets/arduino_wand/preferences.jsonl
+  training/datasets/arduino_wand/preferences.jsonl \
+  training/datasets/cad/preferences.jsonl \
+  training/datasets/mentra/preferences.jsonl
 ```
 
-Feedback records may set **`metadata.domain`**: `python_jarvis` | `arduino_wand` | `rrf_nxt` | `general`. The Learning UI and **`GET /api/v1/feedback`** support **`domain`** / slice filters. MCP: optional **`domain`** on **`jarvis_log_outcome`** / **`jarvis_submit_feedback`**.
+Feedback records may set **`metadata.domain`**: `python_jarvis` | `arduino_wand` | `rrf_nxt` | `cad` | `mentra` | `general`. The Learning UI and **`GET /api/v1/feedback`** support **`domain`** / slice filters. MCP: optional **`domain`** on **`jarvis_log_outcome`** / **`jarvis_submit_feedback`**.
 
 ## DPO / QLoRA train
 
@@ -185,7 +231,7 @@ kubectl -n jarvis-llm delete job jarvis-llm-dpo-gpu --ignore-not-found
 kubectl -n jarvis-llm apply -f k8s/llm-train/job-gpu.yaml
 ```
 
-The Job uses ungated **`unsloth/Llama-3.2-3B-Instruct`** (no HF token; 8B OOMs on a single 1070). Current template writes under **`/data/adapters/run_jarvis_v3`** (merged RRF + Python + Arduino corpus). **`--max-steps`** is **220** for the expanded ~1300+ pair corpus.
+The Job uses ungated **`unsloth/Llama-3.2-3B-Instruct`** (no HF token; 8B OOMs on a single 1070). Current template writes under **`/data/adapters/run_jarvis_v5`** (merged RRF + Python + Arduino + CAD + Mentra corpus). **`--max-steps`** is **280** for the expanded corpus.
 
 GPU Job template: **`k8s/llm-train/job-gpu.yaml`**. Free one 1070 first (scale **`ollama-fast`** down or reduce big-tier GPUs) — see [LLM tiers and hardware](llm-tiers-and-hardware.md).
 
@@ -196,15 +242,15 @@ GPU Job template: **`k8s/llm-train/job-gpu.yaml`**. Free one 1070 first (scale *
 ```bash
 kubectl -n jarvis-llm delete job jarvis-llm-dpo-gpu jarvis-llm-export-ollama --ignore-not-found
 kubectl -n jarvis-llm apply -f k8s/llm-train/job-export-ollama.yaml
-# Artifacts: …/llm-adapters/run_jarvis_v3/{merged/,jarvis-tuned-q8_0.gguf,Modelfile,export_meta.json}
+# Artifacts: …/llm-adapters/run_jarvis_v5/{merged/,jarvis-tuned-q8_0.gguf,Modelfile,export_meta.json}
 ```
 
-   Locally (same CUDA image / train deps): `python -m training.export_ollama_tuned --run-dir …/run_jarvis_v3`.
+   Locally (same CUDA image / train deps): `python -m training.export_ollama_tuned --run-dir …/run_jarvis_v5`.
 
 2. Publish on the **big** Ollama pod (tuned tier routes there; **overwrite** the same tag):
 
 ```bash
-RUN=/media/kad/data/k8s/jarvis-llm/llm-adapters/run_jarvis_v3
+RUN=/media/kad/data/k8s/jarvis-llm/llm-adapters/run_jarvis_v5
 POD=$(kubectl -n jarvis-llm get pod -l app.kubernetes.io/name=ollama -o jsonpath='{.items[0].metadata.name}')
 kubectl -n jarvis-llm exec "$POD" -- mkdir -p /tmp/jarvis-tuned
 kubectl -n jarvis-llm cp "$RUN/jarvis-tuned-q8_0.gguf" "$POD:/tmp/jarvis-tuned/jarvis-tuned-q8_0.gguf"
@@ -231,3 +277,7 @@ Adapters PVC: fridge **`…/jarvis-llm/llm-adapters`** (`llm-adapters` claim in 
 **2026-07-29** — Second tune: formatting/generation syntax + nxt globals (`rrf_syntax`, `generation_style`, `nxt_globals`, `macro_skeleton`); train/export under **`run_rrf_nxt_v2`**; overwrite **`jarvis-tuned:latest`**.
 
 **2026-08-31** — Python (Black) + Arduino datasets: **`build_python_dataset`**, **`build_arduino_dataset`**, **`fetch_public_python_data`**, **`merge_preferences`**; golden **`python_jarvis.jsonl`** / **`arduino_wand.jsonl`**; feedback **`metadata.domain`**; merged train **`run_jarvis_v3`**.
+
+**2026-10-01** — CAD/CAM domain: **`build_cad_dataset`**, **`training/datasets/cad/`** (88 pairs), golden **`cad.jsonl`**; feedback domain **`cad`**; merged train **`run_jarvis_v4`** (565 pairs after jarvis-ratio cap) → **`jarvis-tuned:latest`**. Baseline golden on tuned 3B: cad **8/30**, rrf sample **5/15** — weight transfer on the 3B tag is weak for terse quizzes; rely on **`metadata.domain: cad`** few-shot on **`llama3.1:8b`** for Fusion Design agents, and grow live CAD corrections before the next CAD-heavier merge.
+
+**2026-11-04** — MentraOS domain: **`build_mentra_dataset`**, **`training/datasets/mentra/`**, golden **`mentra.jsonl`**; feedback domain **`mentra`** (Miniapp + Bluetooth SDK; OEM deferred); merged train **`run_jarvis_v5`** → **`jarvis-tuned:latest`**. Prefer **`metadata.domain: mentra`** few-shot on **`llama3.1:8b`** for Mentra coaching; grow live Mentra corrections before the next Mentra-heavier merge.

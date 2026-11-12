@@ -30,7 +30,7 @@ spec:
             - --preferences
             - /data/adapters/preferences.jsonl
             - --out-dir
-            - /data/adapters/run_jarvis_v3
+            - /data/adapters/run_jarvis_v5
             - --base-model
             # Ungated Llama 3.2 Instruct mirror (meta-llama/* requires HF access + token)
             - unsloth/Llama-3.2-3B-Instruct
@@ -41,7 +41,7 @@ spec:
             - --min-pairs
             - "8"
             - --max-steps
-            - "220"
+            - "280"
             - --batch-size
             - "1"
           volumeMounts:

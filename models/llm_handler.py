@@ -308,13 +308,90 @@ class LLMHandler:
     def _can_fallback(self) -> bool:
         return bool(self.fallback_enabled and self._fallback_client and self.fallback_model)
 
+    @staticmethod
+    def _serialize_tool_calls(raw: Any) -> Optional[List[Dict[str, Any]]]:
+        """Normalize OpenAI SDK / dict tool_calls into plain JSON-ready dicts."""
+        if not raw:
+            return None
+        out: List[Dict[str, Any]] = []
+        for i, tc in enumerate(raw):
+            if isinstance(tc, dict):
+                fn = tc.get("function") or {}
+                if not isinstance(fn, dict):
+                    fn = {
+                        "name": getattr(fn, "name", None),
+                        "arguments": getattr(fn, "arguments", None),
+                    }
+                args = fn.get("arguments")
+                if args is not None and not isinstance(args, str):
+                    args = json.dumps(args)
+                entry: Dict[str, Any] = {
+                    "id": tc.get("id") or f"call_{i}",
+                    "type": tc.get("type") or "function",
+                    "function": {
+                        "name": fn.get("name") or "",
+                        "arguments": args if args is not None else "{}",
+                    },
+                }
+                if "index" in tc and tc["index"] is not None:
+                    entry["index"] = tc["index"]
+                out.append(entry)
+                continue
+            fn = getattr(tc, "function", None)
+            args = getattr(fn, "arguments", None) if fn is not None else None
+            if args is not None and not isinstance(args, str):
+                args = json.dumps(args)
+            entry = {
+                "id": getattr(tc, "id", None) or f"call_{i}",
+                "type": getattr(tc, "type", None) or "function",
+                "function": {
+                    "name": getattr(fn, "name", None) or "",
+                    "arguments": args if args is not None else "{}",
+                },
+            }
+            idx = getattr(tc, "index", None)
+            if idx is not None:
+                entry["index"] = idx
+            out.append(entry)
+        return out or None
+
+    @staticmethod
+    def _normalize_chat_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Preserve tool-loop fields; do not flatten to role/content-only."""
+        out: List[Dict[str, Any]] = []
+        for m in messages:
+            msg: Dict[str, Any] = {"role": m.get("role") or "user"}
+            if "content" in m:
+                msg["content"] = m.get("content")
+            elif m.get("tool_calls"):
+                msg["content"] = None
+            else:
+                msg["content"] = ""
+            if m.get("name"):
+                msg["name"] = m["name"]
+            if m.get("tool_call_id"):
+                msg["tool_call_id"] = m["tool_call_id"]
+            if m.get("tool_calls"):
+                msg["tool_calls"] = m["tool_calls"]
+            out.append(msg)
+        return out
+
     def _run_fallback_once(
         self,
         *,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         temperature: float,
         reason: str,
-    ) -> Tuple[str, Optional[Dict[str, Any]], Optional[str], str, str]:
+        tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: Optional[Any] = None,
+    ) -> Tuple[
+        Optional[str],
+        Optional[Dict[str, Any]],
+        Optional[str],
+        str,
+        str,
+        Optional[List[Dict[str, Any]]],
+    ]:
         from utils.metrics import FALLBACK_TOTAL
 
         assert self._fallback_client is not None
@@ -325,12 +402,20 @@ class LLMHandler:
                 "messages": messages,
                 "temperature": temperature,
             }
+            if tools:
+                create_kwargs["tools"] = tools
+            if tool_choice is not None:
+                create_kwargs["tool_choice"] = tool_choice
             trace = outbound_trace_headers()
             if trace:
                 create_kwargs["extra_headers"] = trace
             completion = self._fallback_client.chat.completions.create(**create_kwargs)
             choice = completion.choices[0]
-            text = (choice.message.content or "").strip()
+            msg = choice.message
+            tool_calls = self._serialize_tool_calls(getattr(msg, "tool_calls", None))
+            text = (msg.content or "").strip() if msg.content else (None if tool_calls else "")
+            if tool_calls and text == "":
+                text = None
             usage = completion.usage.model_dump() if completion.usage else None
             FALLBACK_TOTAL.labels("ok").inc()
             logger.warning(f"cloud fallback used reason={reason!r} model={model}")
@@ -340,11 +425,12 @@ class LLMHandler:
                 choice.finish_reason,
                 "fallback",
                 completion.model or model,
+                tool_calls,
             )
         except Exception as e:
             FALLBACK_TOTAL.labels("error").inc()
             logger.error(f"cloud fallback failed: {e}")
-            return f"Error: {e}", None, "error", "fallback", model
+            return f"Error: {e}", None, "error", "fallback", model, None
 
     def resolve_chat_model(self, model: Optional[str]) -> Tuple[str, str, Any]:
         """
@@ -409,12 +495,13 @@ class LLMHandler:
         return event_id, envelope
 
     def _inject_corrections_into_messages(
-        self, messages: List[Dict[str, str]]
-    ) -> Tuple[List[Dict[str, str]], bool]:
+        self, messages: List[Dict[str, Any]]
+    ) -> Tuple[List[Dict[str, Any]], bool]:
+        """Inject few-shot corrections as a system note without rewriting tool-loop turns."""
         user_bits = [
             m.get("content", "")
             for m in messages
-            if m.get("role") == "user" and m.get("content")
+            if m.get("role") == "user" and isinstance(m.get("content"), str) and m.get("content")
         ]
         prompt = "\n".join(user_bits)
         note = self._correction_note(prompt)
@@ -429,11 +516,13 @@ class LLMHandler:
 
     def chat_completion(
         self,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         *,
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         stream: bool = False,
+        tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: Optional[Any] = None,
     ) -> Dict[str, Any] | Generator[Dict[str, Any], None, None]:
         """OpenAI-compatible chat completion (sync or streaming generator of chunk dicts)."""
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
@@ -441,7 +530,7 @@ class LLMHandler:
         tier, resolved_model, client = self.resolve_chat_model(model)
         temp = self.temperature if temperature is None else temperature
         msgs, learning = self._inject_corrections_into_messages(
-            [{"role": m["role"], "content": m.get("content") or ""} for m in messages]
+            self._normalize_chat_messages(messages)
         )
         t0 = time.perf_counter()
 
@@ -456,16 +545,26 @@ class LLMHandler:
                 client=client,
                 t0=t0,
                 learning_applied=learning,
+                tools=tools,
+                tool_choice=tool_choice,
             )
 
-        text, usage, finish_reason, backend, model_used = self._chat_once(
+        text, usage, finish_reason, backend, model_used, tool_calls = self._chat_once(
             messages=msgs,
             model=resolved_model,
             temperature=temp,
             tier=tier,
             client=client,
+            tools=tools,
+            tool_choice=tool_choice,
         )
         timing_ms = int((time.perf_counter() - t0) * 1000)
+        assistant_message: Dict[str, Any] = {"role": "assistant", "content": text}
+        if tool_calls:
+            assistant_message["tool_calls"] = tool_calls
+            if text is None:
+                assistant_message["content"] = None
+        fr = finish_reason or ("tool_calls" if tool_calls else "stop")
         payload = {
             "id": completion_id,
             "object": "chat.completion",
@@ -474,8 +573,8 @@ class LLMHandler:
             "choices": [
                 {
                     "index": 0,
-                    "message": {"role": "assistant", "content": text},
-                    "finish_reason": finish_reason or "stop",
+                    "message": assistant_message,
+                    "finish_reason": fr,
                 }
             ],
             "usage": usage
@@ -492,10 +591,13 @@ class LLMHandler:
                 "learning_applied": learning,
             },
         }
+        store_text = text or ""
+        if tool_calls:
+            store_text = json.dumps({"content": text, "tool_calls": tool_calls})
         self._store_completion(
             completion_id,
             messages=msgs,
-            response_text=text,
+            response_text=store_text,
             model=model_used or resolved_model,
             tier=tier,
             stream=False,
@@ -506,15 +608,23 @@ class LLMHandler:
         self,
         completion_id: str,
         *,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         response_text: str,
         model: str,
         tier: str,
         stream: bool,
     ) -> None:
-        prompt = "\n".join(
-            f"{m.get('role')}: {m.get('content')}" for m in messages if m.get("content")
-        )
+        prompt_parts: List[str] = []
+        for m in messages:
+            role = m.get("role")
+            content = m.get("content")
+            if content:
+                prompt_parts.append(f"{role}: {content}")
+            elif m.get("tool_calls"):
+                prompt_parts.append(f"{role}: [tool_calls]")
+            elif m.get("tool_call_id"):
+                prompt_parts.append(f"{role}: [tool_result {m.get('tool_call_id')}]")
+        prompt = "\n".join(prompt_parts)
         self.completions_store[completion_id] = {
             "completion_id": completion_id,
             "messages": messages,
@@ -532,17 +642,28 @@ class LLMHandler:
     def _chat_once(
         self,
         *,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         model: str,
         temperature: float,
         tier: str,
         client: Any,
-    ) -> Tuple[str, Optional[Dict[str, Any]], Optional[str], str, str]:
+        tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: Optional[Any] = None,
+    ) -> Tuple[
+        Optional[str],
+        Optional[Dict[str, Any]],
+        Optional[str],
+        str,
+        str,
+        Optional[List[Dict[str, Any]]],
+    ]:
         if tier == "fallback" and self._can_fallback():
             return self._run_fallback_once(
                 messages=messages,
                 temperature=temperature,
                 reason="explicit_fallback_model",
+                tools=tools,
+                tool_choice=tool_choice,
             )
 
         if self.model_type == "ollama" and client is not None:
@@ -552,15 +673,29 @@ class LLMHandler:
                     "messages": messages,
                     "temperature": temperature,
                 }
+                if tools:
+                    create_kwargs["tools"] = tools
+                if tool_choice is not None:
+                    create_kwargs["tool_choice"] = tool_choice
                 trace = outbound_trace_headers()
                 if trace:
                     create_kwargs["extra_headers"] = trace
                 completion = client.chat.completions.create(**create_kwargs)
                 choice = completion.choices[0]
                 msg = choice.message
-                text = (msg.content or "").strip()
+                tool_calls = self._serialize_tool_calls(getattr(msg, "tool_calls", None))
+                text = (msg.content or "").strip() if msg.content else (None if tool_calls else "")
+                if tool_calls and text == "":
+                    text = None
                 usage = completion.usage.model_dump() if completion.usage else None
-                return text, usage, choice.finish_reason, "ollama", completion.model or model
+                return (
+                    text,
+                    usage,
+                    choice.finish_reason,
+                    "ollama",
+                    completion.model or model,
+                    tool_calls,
+                )
             except Exception as e:
                 logger.error(f"Ollama chat error (tier={tier}): {e}")
                 if self._can_fallback():
@@ -568,8 +703,10 @@ class LLMHandler:
                         messages=messages,
                         temperature=temperature,
                         reason=f"ollama_error:{e}",
+                        tools=tools,
+                        tool_choice=tool_choice,
                     )
-                return f"Error: {e}", None, "error", "ollama", model
+                return f"Error: {e}", None, "error", "ollama", model, None
 
         if (
             self.model
@@ -577,7 +714,9 @@ class LLMHandler:
             and TRANSFORMERS_AVAILABLE
             and self.model_type == "huggingface"
         ):
-            prompt = "\n".join(m.get("content", "") for m in messages)
+            prompt = "\n".join(
+                (m.get("content") or "") for m in messages if isinstance(m.get("content"), str)
+            )
             try:
                 inputs = self.tokenizer(prompt, return_tensors="pt")
                 outputs = self.model.generate(
@@ -589,40 +728,91 @@ class LLMHandler:
                 response_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
                 if response_text.startswith(prompt):
                     response_text = response_text[len(prompt) :].strip()
-                return response_text, None, "stop", "huggingface", self.model_name
+                return response_text, None, "stop", "huggingface", self.model_name, None
             except Exception as e:
                 if self._can_fallback():
                     return self._run_fallback_once(
                         messages=messages,
                         temperature=temperature,
                         reason=f"hf_error:{e}",
+                        tools=tools,
+                        tool_choice=tool_choice,
                     )
-                return f"Error generating response: {e}", None, "error", "huggingface", model
+                return (
+                    f"Error generating response: {e}",
+                    None,
+                    "error",
+                    "huggingface",
+                    model,
+                    None,
+                )
 
-        # Mock
+        # Mock — emit a deterministic tool call when tools are provided.
         time.sleep(0.05)
+        if tools:
+            chosen_name = None
+            if isinstance(tool_choice, dict):
+                chosen_name = (
+                    (tool_choice.get("function") or {}).get("name")
+                    if tool_choice.get("type") == "function"
+                    else None
+                )
+            elif isinstance(tool_choice, str) and tool_choice not in (
+                "auto",
+                "none",
+                "required",
+            ):
+                chosen_name = tool_choice
+            if not chosen_name:
+                first = tools[0] if tools else {}
+                chosen_name = (first.get("function") or {}).get("name") or "mock_tool"
+            tool_calls = [
+                {
+                    "id": f"call_mock_{uuid.uuid4().hex[:8]}",
+                    "type": "function",
+                    "function": {"name": chosen_name, "arguments": "{}"},
+                }
+            ]
+            return (
+                None,
+                {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+                "tool_calls",
+                "mock",
+                model or "mock_model",
+                tool_calls,
+            )
         last_user = ""
         for m in reversed(messages):
             if m.get("role") == "user":
                 last_user = m.get("content") or ""
                 break
         text = f"Mock response for query: {last_user}" if last_user else "Mock chat response"
-        return text, {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}, "stop", "mock", model or "mock_model"
+        return (
+            text,
+            {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+            "stop",
+            "mock",
+            model or "mock_model",
+            None,
+        )
 
     def _chat_stream(
         self,
         *,
         completion_id: str,
         created: int,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         model: str,
         temperature: float,
         tier: str,
         client: Any,
         t0: float,
         learning_applied: bool = False,
+        tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: Optional[Any] = None,
     ) -> Generator[Dict[str, Any], None, None]:
         full_text_parts: List[str] = []
+        collected_tool_calls: List[Dict[str, Any]] = []
 
         def role_chunk() -> Dict[str, Any]:
             return {
@@ -654,6 +844,21 @@ class LLMHandler:
                 ],
             }
 
+        def tool_calls_chunk(tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+            return {
+                "id": completion_id,
+                "object": "chat.completion.chunk",
+                "created": created,
+                "model": model,
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {"tool_calls": tool_calls},
+                        "finish_reason": None,
+                    }
+                ],
+            }
+
         def done_chunk(finish_reason: str = "stop") -> Dict[str, Any]:
             return {
                 "id": completion_id,
@@ -669,51 +874,82 @@ class LLMHandler:
                 ],
             }
 
+        def emit_delta(delta: Any) -> Generator[Dict[str, Any], None, None]:
+            piece = getattr(delta, "content", None) or ""
+            if piece:
+                full_text_parts.append(piece)
+                yield content_chunk(piece)
+            raw_tcs = getattr(delta, "tool_calls", None)
+            serialized = self._serialize_tool_calls(raw_tcs)
+            if serialized:
+                # Ensure stream deltas carry index for OpenAI clients.
+                for i, tc in enumerate(serialized):
+                    if "index" not in tc:
+                        tc["index"] = i
+                collected_tool_calls.extend(serialized)
+                yield tool_calls_chunk(serialized)
+
         if tier == "fallback" and self._can_fallback():
-            # Stream from cloud fallback explicitly.
             try:
-                create_kwargs = {
+                create_kwargs: Dict[str, Any] = {
                     "model": self.fallback_model,
                     "messages": messages,
                     "temperature": temperature,
                     "stream": True,
                 }
+                if tools:
+                    create_kwargs["tools"] = tools
+                if tool_choice is not None:
+                    create_kwargs["tool_choice"] = tool_choice
                 stream = self._fallback_client.chat.completions.create(**create_kwargs)
                 model = self.fallback_model
                 yield role_chunk()
                 for event in stream:
                     if not event.choices:
                         continue
-                    delta = event.choices[0].delta
-                    piece = getattr(delta, "content", None) or ""
-                    if piece:
-                        full_text_parts.append(piece)
-                        yield content_chunk(piece)
+                    yield from emit_delta(event.choices[0].delta)
                     fr = event.choices[0].finish_reason
                     if fr:
                         yield done_chunk(fr)
                         break
                 else:
-                    yield done_chunk("stop")
+                    yield done_chunk("tool_calls" if collected_tool_calls else "stop")
             except Exception as e:
-                text, _, fr, _, model_used = self._run_fallback_once(
+                text, _, fr, _, model_used, tcs = self._run_fallback_once(
                     messages=messages,
                     temperature=temperature,
                     reason=f"fallback_stream_error:{e}",
+                    tools=tools,
+                    tool_choice=tool_choice,
                 )
                 model = model_used
                 yield role_chunk()
-                full_text_parts.append(text)
-                yield content_chunk(text)
-                yield done_chunk(fr or "stop")
+                if tcs:
+                    collected_tool_calls.extend(tcs)
+                    indexed = []
+                    for i, tc in enumerate(tcs):
+                        item = dict(tc)
+                        item.setdefault("index", i)
+                        indexed.append(item)
+                    yield tool_calls_chunk(indexed)
+                elif text:
+                    full_text_parts.append(text)
+                    yield content_chunk(text)
+                else:
+                    yield content_chunk("")
+                yield done_chunk(fr or ("tool_calls" if tcs else "stop"))
         elif self.model_type == "ollama" and client is not None:
             try:
-                create_kwargs: Dict[str, Any] = {
+                create_kwargs = {
                     "model": model,
                     "messages": messages,
                     "temperature": temperature,
                     "stream": True,
                 }
+                if tools:
+                    create_kwargs["tools"] = tools
+                if tool_choice is not None:
+                    create_kwargs["tool_choice"] = tool_choice
                 trace = outbound_trace_headers()
                 if trace:
                     create_kwargs["extra_headers"] = trace
@@ -722,37 +958,44 @@ class LLMHandler:
                 for event in stream:
                     if not event.choices:
                         continue
-                    delta = event.choices[0].delta
-                    piece = getattr(delta, "content", None) or ""
-                    if piece:
-                        full_text_parts.append(piece)
-                        yield content_chunk(piece)
+                    yield from emit_delta(event.choices[0].delta)
                     fr = event.choices[0].finish_reason
                     if fr:
                         yield done_chunk(fr)
                         break
                 else:
-                    yield done_chunk("stop")
+                    yield done_chunk("tool_calls" if collected_tool_calls else "stop")
             except Exception as e:
                 logger.error(f"Ollama stream error (tier={tier}): {e}")
                 if self._can_fallback():
-                    text, _, fr, _, model_used = self._run_fallback_once(
+                    text, _, fr, _, model_used, tcs = self._run_fallback_once(
                         messages=messages,
                         temperature=temperature,
                         reason=f"ollama_stream_error:{e}",
+                        tools=tools,
+                        tool_choice=tool_choice,
                     )
                     model = model_used
                     yield role_chunk()
-                    # Emit as chunked content after primary failure.
-                    step = max(1, len(text) // 4) if text else 1
-                    if not text:
-                        yield content_chunk("")
+                    if tcs:
+                        collected_tool_calls.extend(tcs)
+                        indexed = []
+                        for i, tc in enumerate(tcs):
+                            item = dict(tc)
+                            item.setdefault("index", i)
+                            indexed.append(item)
+                        yield tool_calls_chunk(indexed)
+                        yield done_chunk(fr or "tool_calls")
                     else:
-                        for i in range(0, len(text), step):
-                            piece = text[i : i + step]
-                            full_text_parts.append(piece)
-                            yield content_chunk(piece)
-                    yield done_chunk(fr or "stop")
+                        step = max(1, len(text) // 4) if text else 1
+                        if not text:
+                            yield content_chunk("")
+                        else:
+                            for i in range(0, len(text), step):
+                                piece = text[i : i + step]
+                                full_text_parts.append(piece)
+                                yield content_chunk(piece)
+                        yield done_chunk(fr or "stop")
                 else:
                     yield role_chunk()
                     err = f"Error: {e}"
@@ -760,36 +1003,52 @@ class LLMHandler:
                     yield content_chunk(err)
                     yield done_chunk("error")
         else:
-            # Mock / HF: emit role + whole text as one content chunk.
-            text, _, finish_reason, _, model_used = self._chat_once(
+            # Mock / HF: emit role + content and/or tool_calls.
+            text, _, finish_reason, _, model_used, tcs = self._chat_once(
                 messages=messages,
                 model=model,
                 temperature=temperature,
                 tier=tier,
                 client=client,
+                tools=tools,
+                tool_choice=tool_choice,
             )
             model = model_used or model
             yield role_chunk()
-            # Chunk mock output for realistic SSE.
-            step = max(1, len(text) // 4) if text else 1
-            if not text:
-                yield content_chunk("")
+            if tcs:
+                collected_tool_calls.extend(tcs)
+                indexed = []
+                for i, tc in enumerate(tcs):
+                    item = dict(tc)
+                    item.setdefault("index", i)
+                    indexed.append(item)
+                yield tool_calls_chunk(indexed)
+                yield done_chunk(finish_reason or "tool_calls")
             else:
-                for i in range(0, len(text), step):
-                    piece = text[i : i + step]
-                    full_text_parts.append(piece)
-                    yield content_chunk(piece)
-            yield done_chunk(finish_reason or "stop")
+                step = max(1, len(text) // 4) if text else 1
+                if not text:
+                    yield content_chunk("")
+                else:
+                    for i in range(0, len(text), step):
+                        piece = text[i : i + step]
+                        full_text_parts.append(piece)
+                        yield content_chunk(piece)
+                yield done_chunk(finish_reason or "stop")
 
+        store_text = "".join(full_text_parts)
+        if collected_tool_calls:
+            store_text = json.dumps(
+                {"content": store_text or None, "tool_calls": collected_tool_calls}
+            )
         self._store_completion(
             completion_id,
             messages=messages,
-            response_text="".join(full_text_parts),
+            response_text=store_text,
             model=model,
             tier=tier,
             stream=True,
         )
-        _ = t0  # reserved for future jarvis stream trailer metrics
+        _ = (t0, learning_applied)  # reserved for future jarvis stream trailer metrics
 
     def _run_ollama(
         self,
@@ -840,7 +1099,7 @@ class LLMHandler:
         except Exception as e:
             logger.error(f"Ollama error (tier={tier}): {e}")
             if self._can_fallback() and not prefer_local:
-                text, usage, finish_reason, backend, model_used = self._run_fallback_once(
+                text, usage, finish_reason, backend, model_used, _tcs = self._run_fallback_once(
                     messages=messages,
                     temperature=self.temperature,
                     reason=f"ollama_event_error:{e}",

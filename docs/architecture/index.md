@@ -119,15 +119,16 @@ sequenceDiagram
   participant FB as FeedbackStore
   participant O as Ollama
   Cur->>API: POST /v1/chat/completions
+  Note over Cur,API: Optional tools tool_choice for MCP Agent
   API->>FB: similar_corrections_few_shot
   API->>O: chat_completions_stream_or_sync
-  O-->>API: tokens
+  O-->>API: tokens_or_tool_calls
   API-->>Cur: OpenAI_JSON_or_SSE
   Note over Cur,FB: Optional POST /api/v1/feedback for DPO later
   Note over Cur,FB: Cursor hooks afterMCPExecution and stop also POST call plus result
 ```
 
-See [OpenAI-compatible API](../api/openai-compat.md) and [Feedback and fine-tuning](../operations/feedback-and-finetune.md).
+See [OpenAI-compatible API](../api/openai-compat.md) (including [tool calling](../api/openai-compat.md#tool_calling)), [Fusion 360 MCP + local Jarvis](../operations/fusion360-mcp.md), and [Feedback and fine-tuning](../operations/feedback-and-finetune.md). Fusion / CAM coaching trajectories use feedback domain **`cad`** (dataset **`training/datasets/cad/`**).
 
 ---
 

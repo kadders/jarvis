@@ -117,6 +117,40 @@ def infer_domain_from_text(text: str) -> Optional[str]:
     t = (text or "").lower()
     if any(k in t for k in (".cpp", "esp32", "platformio", "arduino", "fastled", "wifimode")):
         return "arduino_wand"
+    if any(
+        k in t
+        for k in (
+            "mentra",
+            "mentraglass",
+            "@mentra/miniapp",
+            "@mentra/bluetooth-sdk",
+            "registerminiapp",
+            "devicemodels.mentralive",
+            "mentra live",
+            "mentraos",
+            "session.display.render",
+            "create-mentra-miniapp",
+        )
+    ):
+        return "mentra"
+    if any(
+        k in t
+        for k in (
+            "fusion 360",
+            "fusion360",
+            "create_box",
+            "get_scene_info",
+            "chipload",
+            "feed_mm_min",
+            "post-process.number",
+            "manufacture",
+            "toolpath",
+            "adaptive clearing",
+            "cutting_force",
+            "fusion mcp",
+        )
+    ):
+        return "cad"
     if any(k in t for k in ("reprapfirmware", "rrf", "nxt", "gcode", "inputs[state.thisinput]")):
         return "rrf_nxt"
     if any(k in t for k in (".py", "pytest", "fastapi", "black", "python", "mqtt", "jarvis")):

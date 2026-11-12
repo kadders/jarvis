@@ -74,7 +74,7 @@ Jarvis MCP tools return a **JSON string** (MCP `text` content). Parse with `JSON
 | `correction` | string | no | Preferred answer text |
 | `preferred` / `rejected` | string | no | Explicit DPO pair |
 | `prompt` / `response` | string | no | Override when ids are unknown |
-| `domain` | string | no | `python_jarvis` \| `arduino_wand` \| `rrf_nxt` \| `general` |
+| `domain` | string | no | `python_jarvis` \| `arduino_wand` \| `rrf_nxt` \| `cad` \| `mentra` \| `general` |
 
 **HTTP:** `POST {JARVIS_LLM_BASE_URL}/feedback` with `source: "mcp"`.
 
@@ -97,7 +97,7 @@ Log a **call + end result** (optional brief **logic**) into the feedback store s
 | `correction` | string | no | Preferred text when `rating` is **`-1`** |
 | `event_id` | string | no | Link to a prior Jarvis event |
 | `completion_id` | string | no | Link to an OpenAI `chatcmpl-…` id |
-| `domain` | string | no | `python_jarvis` \| `arduino_wand` \| `rrf_nxt` \| `general` (stored in `metadata.domain`) |
+| `domain` | string | no | `python_jarvis` \| `arduino_wand` \| `rrf_nxt` \| `cad` \| `mentra` \| `general` (stored in `metadata.domain`) |
 
 **HTTP:** `POST {JARVIS_LLM_BASE_URL}/feedback` with `source: "mcp"`, `metadata.kind: "outcome"`. When `rating > 0` and no `correction`, sets **`preferred`** to `result` for later DPO export.
 

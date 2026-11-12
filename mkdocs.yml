@@ -63,5 +63,6 @@ nav:
       - Observability: operations/observability.md
       - Feedback and fine-tuning: operations/feedback-and-finetune.md
       - Cursor tunnel fallback: operations/cursor-tunnel.md
+      - Fusion 360 MCP: operations/fusion360-mcp.md
   - Reference:
       - Environment variables: reference/environment-variables.md

@@ -9,6 +9,21 @@
         "JARVIS_MCP_TRANSPORT": "stdio",
         "JARVIS_LLM_TIMEOUT_S": "120"
       }
+    },
+    "fusion360": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/faust-machines/fusion360-mcp-server",
+        "--with",
+        "mcp<2",
+        "fusion360-mcp-server",
+        "--mode",
+        "socket"
+      ],
+      "env": {
+        "FUSION_MCP_HOST": "192.168.122.166"
+      }
     }
   }
 }

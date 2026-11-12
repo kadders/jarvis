@@ -6,7 +6,7 @@ Jarvis exposes an **OpenAI-compatible** surface so clients such as **Cursor** (O
 | ------ | ---- | ---- |
 | **`GET`** | **`/v1/models`** | List default, fast, and optional tuned model ids (plus Cursor-friendly aliases). |
 | **`GET`** | **`/v1/models/{id}`** | Single model metadata. |
-| **`POST`** | **`/v1/chat/completions`** | Chat completion; supports **`stream: true`** (SSE). |
+| **`POST`** | **`/v1/chat/completions`** | Chat completion; supports **`stream: true`** (SSE) and OpenAI **`tools` / `tool_calls`**. |
 
 The legacy events API remains at **`/api/v1/events`**. Prefer **`/v1`** for IDE / OpenAI clients.
 
@@ -40,6 +40,37 @@ curl -s http://llm.jarvis.lan/v1/chat/completions \
 ```
 
 Response shape matches OpenAI (`id`, `choices[0].message`, `usage`) plus a small **`jarvis`** object (`tier`, `backend`, `timing_ms`).
+
+## Tool calling {#tool_calling}
+
+`POST /v1/chat/completions` accepts OpenAI-style **`tools`** and **`tool_choice`**, and returns **`choices[0].message.tool_calls`** with **`finish_reason: "tool_calls"`** when the model invokes a function. Follow-up turns use **`role: "assistant"`** (with prior `tool_calls`) and **`role: "tool"`** (`tool_call_id` + result `content`).
+
+The default big-tier model **`llama3.1:8b`** supports tool calling via Ollama. Streaming SSE may include **`delta.tool_calls`** chunks.
+
+For CAD / Fusion MCP (one Fusion API op per call), prefer **`parallel_tool_calls: false`** on the client when available. Jarvis accepts the field and ignores it (pass-through to upstream when the OpenAI SDK supports it on the Ollama path is best-effort).
+
+Example (non-streaming):
+
+```bash
+curl -s http://llm.jarvis.lan/v1/chat/completions \
+  -H "Authorization: Bearer jarvis-lan-openai" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama31-8b",
+    "messages": [{"role": "user", "content": "Call ping"}],
+    "tools": [{
+      "type": "function",
+      "function": {
+        "name": "ping",
+        "description": "Health check",
+        "parameters": {"type": "object", "properties": {}}
+      }
+    }],
+    "stream": false
+  }'
+```
+
+See [Fusion 360 MCP + local Jarvis](../operations/fusion360-mcp.md) for Cursor + cross-LAN CAD wiring.
 
 ## Streaming
 
@@ -92,5 +123,6 @@ Completion ids (`chatcmpl-…`) can be rated via **`POST /api/v1/feedback`** —
 ## Related
 
 - [LLM events API](llm-events.md)
+- [Fusion 360 MCP + local Jarvis](../operations/fusion360-mcp.md)
 - [Cluster DNS](../operations/cluster-dns.md)
 - [LLM tiers and hardware](../operations/llm-tiers-and-hardware.md)

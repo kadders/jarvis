@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Jarvis overview
 
-- **LLM API**: FastAPI at repo root; primary model path **Ollama** + **`llama3.1:8b`** default (OpenAI-compatible HTTP; **`gpt-oss:20b`** after Ollama bump); optional Hugging Face / `mock`.
+- **LLM API**: FastAPI at repo root; primary model path **Ollama** + **`llama3.1:8b`** default (OpenAI-compatible HTTP with **`tools` / `tool_calls`**; **`gpt-oss:20b`** after Ollama bump); optional Hugging Face / `mock`.
 - **Idempotency**: `POST /api/v1/events` honors **`Idempotency-Key`**; backends **`memory`** or **`redis`** (`REDIS_URL`).
 - **Wand**: Interactive wand FastAPI on **8002** (`wand/`, `docs/wand/`).
 - **Chat UI**: browser chat BFF on **8003** (`ui/`); proxies LLM events; optional **`k8s/ui`**.
